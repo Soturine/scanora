@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280" fill="none">
+  <rect width="720" height="1280" rx="48" fill="#F3F2EE"/>
+  <rect x="44" y="44" width="632" height="1192" rx="40" fill="white" stroke="#D8D8D2"/>
+  <rect x="92" y="120" width="260" height="20" rx="10" fill="#2E7D8C"/>
+  <rect x="92" y="168" width="420" height="72" rx="22" fill="#10242B"/>
+  <rect x="92" y="272" width="536" height="180" rx="28" fill="#F8FAFB" stroke="#D8D8D2"/>
+  <rect x="92" y="484" width="536" height="120" rx="28" fill="#F6F5F1" stroke="#D8D8D2"/>
+  <rect x="92" y="628" width="536" height="120" rx="28" fill="#F6F5F1" stroke="#D8D8D2"/>
+  <rect x="92" y="772" width="536" height="120" rx="28" fill="#F6F5F1" stroke="#D8D8D2"/>
+  <text x="92" y="1020" fill="#365B67" font-size="42" font-family="Segoe UI, sans-serif">Home placeholder</text>
+</svg>
+

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Scanora</string>
+    <string name="splash_title">Scanora</string>
+    <string name="splash_subtitle">Organize, revise e exporte seus documentos com foco em privacidade.</string>
+    <string name="onboarding_page_one_title">Escaneie em poucos passos</string>
+    <string name="onboarding_page_one_body">Capture pela câmera, importe da galeria ou use o scanner guiado para acelerar o primeiro lote.</string>
+    <string name="onboarding_page_two_title">Ajuste corte, filtros e ordem</string>
+    <string name="onboarding_page_two_body">Revise cada página, aplique filtros de documento, gire, renomeie e reorganize antes de exportar.</string>
+    <string name="onboarding_page_three_title">Privacidade por padrão</string>
+    <string name="onboarding_page_three_body">O processamento acontece localmente sempre que possível, sem upload obrigatório para usar o app.</string>
+    <string name="onboarding_next">Próximo</string>
+    <string name="onboarding_finish">Começar</string>
+</resources>

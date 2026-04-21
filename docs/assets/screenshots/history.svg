@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280" fill="none">
+  <rect width="720" height="1280" rx="48" fill="#F3F2EE"/>
+  <rect x="52" y="60" width="616" height="1160" rx="40" fill="white" stroke="#D8D8D2"/>
+  <rect x="100" y="130" width="520" height="84" rx="22" fill="#EEF2F4"/>
+  <rect x="100" y="270" width="520" height="200" rx="28" fill="#F8FAFB" stroke="#D8D8D2"/>
+  <rect x="100" y="500" width="520" height="200" rx="28" fill="#F8FAFB" stroke="#D8D8D2"/>
+  <rect x="100" y="730" width="520" height="200" rx="28" fill="#F8FAFB" stroke="#D8D8D2"/>
+  <text x="150" y="1040" fill="#365B67" font-size="42" font-family="Segoe UI, sans-serif">History placeholder</text>
+</svg>
+

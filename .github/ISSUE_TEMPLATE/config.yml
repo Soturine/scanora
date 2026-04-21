@@ -1,0 +1,6 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Segurança
+    url: https://github.com/seunome/scanora/security
+    about: Não abra issues públicas para vulnerabilidades.
+

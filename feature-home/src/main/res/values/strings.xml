@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_title">Início</string>
+    <string name="home_app_bar_title">Scanora</string>
+    <string name="home_hero_title">Escaneie e organize seus documentos sem sair do aparelho.</string>
+    <string name="home_hero_subtitle">Fluxo rápido para capturar, ajustar, revisar e exportar em poucos toques.</string>
+    <string name="home_scan_action">Escanear</string>
+    <string name="home_import_action">Importar imagens</string>
+    <string name="home_mode_section">Modo de captura</string>
+    <string name="home_search_label">Busca</string>
+    <string name="home_search_placeholder">Busca por título ou tag</string>
+    <string name="home_recent_section">Recentes</string>
+    <string name="home_empty_title">Seu histórico começa aqui</string>
+    <string name="home_empty_message">Capture um documento ou importe imagens para montar o primeiro lote.</string>
+    <string name="home_recent_subtitle">%1$d páginas • atualizado em %2$s</string>
+    <string name="home_history">Meus scans</string>
+    <string name="home_settings">Configurações</string>
+</resources>

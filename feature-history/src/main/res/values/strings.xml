@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="history_title">Meus scans</string>
+    <string name="history_search_label">Buscar scans</string>
+    <string name="history_search_placeholder">Título ou tag</string>
+    <string name="history_empty_title">Nenhum scan salvo</string>
+    <string name="history_empty_message">Quando você exportar ou salvar um lote, ele aparece aqui.</string>
+    <string name="history_subtitle">%1$d páginas • atualizado em %2$s</string>
+    <string name="history_detail_missing_title">Scan não encontrado</string>
+    <string name="history_detail_missing_message">Esse lote pode ter sido removido.</string>
+    <string name="history_detail_meta">%1$d páginas • %2$s</string>
+    <string name="history_add_favorite">Marcar como favorito</string>
+    <string name="history_remove_favorite">Remover dos favoritos</string>
+    <string name="history_open_review">Abrir revisão</string>
+    <string name="history_open_export">Exportar novamente</string>
+    <string name="history_page_title">Página %1$d</string>
+    <string name="history_delete_scan">Excluir scan</string>
+</resources>

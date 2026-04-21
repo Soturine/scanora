@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ocr_title">OCR</string>
+    <string name="ocr_missing_title">Página indisponível</string>
+    <string name="ocr_missing_message">Abra uma página válida para reconhecer texto.</string>
+    <string name="ocr_processing">Processando texto localmente…</string>
+    <string name="ocr_result_title">Texto reconhecido</string>
+    <string name="ocr_empty_text">Nenhum texto foi encontrado nessa página.</string>
+    <string name="ocr_copy">Copiar texto</string>
+    <string name="ocr_retry">Rodar OCR novamente</string>
+</resources>

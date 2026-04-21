@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Configurações</string>
+    <string name="settings_theme_section">Tema</string>
+    <string name="settings_default_mode_section">Modo padrão</string>
+    <string name="settings_pdf_quality_section">Qualidade padrão do PDF</string>
+    <string name="settings_reset_onboarding">Rever onboarding</string>
+    <string name="settings_open_about">Sobre o app</string>
+    <string name="settings_about_title">Sobre o Scanora</string>
+    <string name="settings_about_body">Scanora é um scanner de documentos local e offline-first, criado para capturar páginas, melhorar legibilidade e exportar em formatos úteis sem depender de upload obrigatório.</string>
+    <string name="settings_open_privacy">Abrir política de privacidade</string>
+</resources>
