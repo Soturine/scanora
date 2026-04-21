@@ -1,9 +1,9 @@
 # Scanora
 
 ![Android](https://img.shields.io/badge/platform-Android-2E7D8C)
-![Kotlin](https://img.shields.io/badge/Kotlin-2.1.21-23414B)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-23414B)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-DD8A2E)
-![Version](https://img.shields.io/badge/version-0.1.0-133942)
+![Version](https://img.shields.io/badge/version-0.1.1-133942)
 ![Status](https://img.shields.io/badge/status-MVP%20ativo-2E7D8C)
 [![Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml)
 [![Deploy Pages](https://github.com/Soturine/scanora/actions/workflows/pages.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/pages.yml)
@@ -69,8 +69,8 @@ Mais detalhes em [docs/architecture.md](docs/architecture.md).
 ## Como rodar
 
 1. Abra o projeto no Android Studio mais recente com suporte a AGP 9.1.
-2. Use JDK 17 no Gradle.
-3. Instale Android SDK Platform 36 e Build Tools compatíveis.
+2. Use JDK 17 ou superior compatível com AGP 9 no Gradle.
+3. Instale Android SDK Platform 36 e Build Tools 36.0.0.
 4. Rode `./gradlew assembleDebug` ou use o botão Run do Android Studio.
 
 Setup detalhado: [docs/setup.md](docs/setup.md)
@@ -88,7 +88,8 @@ Leia a política em [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 - O pipeline local de detecção de documento ainda é heurístico para importações/capturas manuais.
 - O scanner guiado depende da disponibilidade do ML Kit no dispositivo.
-- O ambiente desta entrega não possui Android SDK instalado, então a compilação final não pôde ser validada localmente aqui.
+- Build, lint e testes unitários foram validados localmente em 2026-04-21 com Android SDK Platform 36.
+- A revisão visual desta rodada foi estática, via Compose/code review; ainda vale fechar QA em emulador e dispositivos reais.
 - Ainda não há sincronização em nuvem, criptografia em repouso ou edição colaborativa.
 
 ## Contribuição
@@ -111,4 +112,4 @@ Versão completa em [ROADMAP.md](ROADMAP.md).
 
 ## Status do projeto
 
-`0.1.0` representa um MVP funcional e escalável, pronto para refinamento técnico e polimento de produção.
+`0.1.1` representa um MVP funcional e escalável, já validado em build local e pronto para refinamento técnico e polimento de produção.

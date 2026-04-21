@@ -7,6 +7,8 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
+private val ColorWhite = Color(0xFFFFFFFF)
+
 private val LightColors = lightColorScheme(
     primary = Teal500,
     onPrimary = Sand100,
@@ -40,8 +42,6 @@ private val DarkColors = darkColorScheme(
     outline = Teal300,
     error = Color(0xFFFFB4AB),
 )
-
-private val ColorWhite = Color(0xFFFFFFFF)
 
 @Composable
 fun ScanoraTheme(

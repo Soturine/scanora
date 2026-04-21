@@ -220,6 +220,7 @@ fun ScanoraNavHost(
                 state = state.value,
                 onRename = editorViewModel::renameScan,
                 onUpdateTags = editorViewModel::updateTags,
+                onClearMessage = editorViewModel::clearMessage,
                 onSelectPage = editorViewModel::selectPage,
                 onMovePageUp = { editorViewModel.movePage(it, -1) },
                 onMovePageDown = { editorViewModel.movePage(it, 1) },

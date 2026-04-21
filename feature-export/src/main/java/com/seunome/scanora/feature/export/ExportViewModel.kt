@@ -26,15 +26,29 @@ class ExportViewModel(
     private val exportedFiles = MutableStateFlow(emptyList<com.seunome.scanora.core.common.model.ExportedFile>())
     private val errorMessage = MutableStateFlow<String?>(null)
 
-    val uiState: StateFlow<ExportUiState> = combine(
-        scanRepository.observeScan(scanId),
-        preferencesRepository.preferences,
+    private val exportSelection = combine(
         selectedFormat,
         selectedQuality,
+    ) { format, qualityOverride ->
+        format to qualityOverride
+    }
+
+    private val exportStatus = combine(
         isExporting,
         exportedFiles,
         errorMessage,
-    ) { scan, preferences, format, qualityOverride, exporting, files, message ->
+    ) { exporting, files, message ->
+        Triple(exporting, files, message)
+    }
+
+    val uiState: StateFlow<ExportUiState> = combine(
+        scanRepository.observeScan(scanId),
+        preferencesRepository.preferences,
+        exportSelection,
+        exportStatus,
+    ) { scan, preferences, selection, status ->
+        val (format, qualityOverride) = selection
+        val (exporting, files, message) = status
         ExportUiState(
             scan = scan,
             selectedFormat = format,
@@ -86,4 +100,3 @@ class ExportViewModel(
         errorMessage.value = null
     }
 }
-

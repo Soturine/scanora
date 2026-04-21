@@ -3,8 +3,10 @@
     <string name="export_title">Exportar</string>
     <string name="export_missing_title">Nada para exportar</string>
     <string name="export_missing_message">Crie ou abra um lote antes de gerar arquivos.</string>
+    <string name="export_summary">%1$d página(s) prontas para exportação.</string>
     <string name="export_format_section">Formato de saída</string>
     <string name="export_quality_section">Qualidade do PDF</string>
+    <string name="export_processing_message">Gerando arquivos localmente. Isso pode levar alguns segundos.</string>
     <string name="export_action">Gerar arquivos</string>
     <string name="export_success_message">%1$d arquivo(s) pronto(s) para compartilhar.</string>
     <string name="export_share_action">Compartilhar exportação</string>

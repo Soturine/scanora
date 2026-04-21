@@ -1,16 +1,19 @@
 package com.seunome.scanora.feature.editor
 
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -21,6 +24,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -203,6 +207,7 @@ fun ReviewScreen(
     state: EditorUiState,
     onRename: (String) -> Unit,
     onUpdateTags: (String) -> Unit,
+    onClearMessage: () -> Unit,
     onSelectPage: (String) -> Unit,
     onMovePageUp: (String) -> Unit,
     onMovePageDown: (String) -> Unit,
@@ -223,8 +228,27 @@ fun ReviewScreen(
         return
     }
 
-    var title by remember(scan.id, scan.title) { mutableStateOf(scan.title) }
-    var tags by remember(scan.id, scan.tags) { mutableStateOf(scan.tags.joinToString(", ")) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val orderedPages = remember(scan.pages) { scan.pages.sortedBy { it.index } }
+    val persistedTags = remember(scan.tags) { scan.tags.joinToString(", ") }
+    var title by rememberSaveable(scan.id, scan.title) { mutableStateOf(scan.title) }
+    var tags by rememberSaveable(scan.id, persistedTags) { mutableStateOf(persistedTags) }
+    val normalizedTagDraft = remember(tags) {
+        tags
+            .split(",")
+            .map(String::trim)
+            .filter(String::isNotBlank)
+            .distinct()
+    }
+    val hasTitleChanges = title.trim() != scan.title
+    val hasTagChanges = normalizedTagDraft != scan.tags
+
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            onClearMessage()
+        }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -233,6 +257,7 @@ fun ReviewScreen(
                 title = { Text(text = stringResource(id = R.string.editor_review_title)) },
             )
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -244,31 +269,47 @@ fun ReviewScreen(
             androidx.compose.material3.OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = title,
-                onValueChange = {
-                    title = it
-                    onRename(it)
-                },
+                onValueChange = { title = it },
                 label = { Text(text = stringResource(id = R.string.editor_document_name)) },
             )
+            OutlinedButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { onRename(title) },
+                enabled = hasTitleChanges,
+            ) {
+                Text(text = stringResource(id = R.string.editor_save_name))
+            }
             androidx.compose.material3.OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = tags,
-                onValueChange = {
-                    tags = it
-                    onUpdateTags(it)
-                },
+                onValueChange = { tags = it },
                 label = { Text(text = stringResource(id = R.string.editor_tags)) },
                 supportingText = { Text(text = stringResource(id = R.string.editor_tags_helper)) },
+            )
+            OutlinedButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { onUpdateTags(tags) },
+                enabled = hasTagChanges,
+            ) {
+                Text(text = stringResource(id = R.string.editor_save_tags))
+            }
+            Text(
+                text = stringResource(id = R.string.editor_review_helper),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 text = stringResource(id = R.string.editor_pages_section),
                 style = MaterialTheme.typography.titleLarge,
             )
-            androidx.compose.foundation.lazy.LazyColumn(
+            LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                items(scan.pages.sortedBy { it.index }, key = { it.id }) { page ->
+                itemsIndexed(
+                    items = orderedPages,
+                    key = { _, page -> page.id },
+                ) { index, page ->
                     PageActionsCard(
                         title = stringResource(id = R.string.editor_page_title, page.index + 1),
                         subtitle = page.filterType.title,
@@ -278,32 +319,47 @@ fun ReviewScreen(
                         onMoveUp = { onMovePageUp(page.id) },
                         onMoveDown = { onMovePageDown(page.id) },
                         onOpenOcr = { onOpenOcr(page.id) },
+                        canMoveUp = index > 0,
+                        canMoveDown = index < orderedPages.lastIndex,
                     )
                 }
             }
-            Button(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = onOpenCrop,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text(text = stringResource(id = R.string.editor_open_crop))
+                Button(
+                    modifier = Modifier.weight(1f),
+                    onClick = onOpenCrop,
+                    enabled = state.currentPage != null,
+                ) {
+                    Text(text = stringResource(id = R.string.editor_open_crop))
+                }
+                Button(
+                    modifier = Modifier.weight(1f),
+                    onClick = onOpenFilters,
+                    enabled = state.currentPage != null,
+                ) {
+                    Text(text = stringResource(id = R.string.editor_open_filters))
+                }
             }
-            Button(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = onOpenFilters,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text(text = stringResource(id = R.string.editor_open_filters))
-            }
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = onDeleteCurrentPage,
-            ) {
-                Text(text = stringResource(id = R.string.editor_delete_page))
-            }
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = onOpenExport,
-            ) {
-                Text(text = stringResource(id = R.string.editor_open_export))
+                Button(
+                    modifier = Modifier.weight(1f),
+                    onClick = onDeleteCurrentPage,
+                    enabled = state.currentPage != null,
+                ) {
+                    Text(text = stringResource(id = R.string.editor_delete_page))
+                }
+                Button(
+                    modifier = Modifier.weight(1f),
+                    onClick = onOpenExport,
+                ) {
+                    Text(text = stringResource(id = R.string.editor_open_export))
+                }
             }
         }
     }
@@ -319,6 +375,8 @@ private fun PageActionsCard(
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
     onOpenOcr: () -> Unit,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
 ) {
     androidx.compose.material3.Card(
         modifier = Modifier.fillMaxWidth(),
@@ -335,7 +393,11 @@ private fun PageActionsCard(
             )
             Text(text = title, style = MaterialTheme.typography.titleLarge)
             Text(
-                text = if (selected) "$subtitle | selecionada" else subtitle,
+                text = if (selected) {
+                    stringResource(id = R.string.editor_page_subtitle_selected, subtitle)
+                } else {
+                    subtitle
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -343,18 +405,27 @@ private fun PageActionsCard(
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onSelect,
+                    enabled = !selected,
                 ) {
-                    Text(text = stringResource(id = R.string.editor_select_page))
+                    Text(
+                        text = if (selected) {
+                            stringResource(id = R.string.editor_page_selected)
+                        } else {
+                            stringResource(id = R.string.editor_select_page)
+                        },
+                    )
                 }
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onMoveUp,
+                    enabled = canMoveUp,
                 ) {
                     Text(text = stringResource(id = R.string.editor_move_up))
                 }
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onMoveDown,
+                    enabled = canMoveDown,
                 ) {
                     Text(text = stringResource(id = R.string.editor_move_down))
                 }

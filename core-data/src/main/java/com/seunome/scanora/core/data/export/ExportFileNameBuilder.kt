@@ -1,14 +1,14 @@
 package com.seunome.scanora.core.data.export
 
 import com.seunome.scanora.core.common.model.ExportFormat
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.text.Normalizer
+import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.TimeZone
 
 class ExportFileNameBuilder(
-    private val clock: Clock = Clock.system(ZoneId.of("America/Sao_Paulo")),
+    private val currentTimeMillis: () -> Long = System::currentTimeMillis,
+    private val timeZone: TimeZone = TimeZone.getTimeZone("America/Sao_Paulo"),
 ) {
     fun buildBaseName(
         title: String,
@@ -16,7 +16,7 @@ class ExportFileNameBuilder(
         suffix: String? = null,
     ): String {
         val slug = normalize(title)
-        val stamp = formatter.format(Instant.now(clock))
+        val stamp = timestampFormatter().format(currentTimeMillis())
         val optionalSuffix = suffix?.let { "-$it" }.orEmpty()
         return "$slug-$stamp$optionalSuffix.${format.fileExtension}"
     }
@@ -32,7 +32,8 @@ class ExportFileNameBuilder(
     )
 
     private fun normalize(title: String): String =
-        title
+        Normalizer.normalize(title.trim(), Normalizer.Form.NFD)
+            .replace(Regex("\\p{M}+"), "")
             .trim()
             .ifBlank { "scanora-scan" }
             .lowercase(Locale.ROOT)
@@ -41,11 +42,8 @@ class ExportFileNameBuilder(
             .take(50)
             .ifBlank { "scanora-scan" }
 
-    private companion object {
-        val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern(
-            "yyyyMMdd-HHmmss",
-            Locale.ROOT,
-        ).withZone(ZoneId.of("America/Sao_Paulo"))
+    private fun timestampFormatter(): SimpleDateFormat =
+        SimpleDateFormat("yyyyMMdd-HHmmss", Locale.ROOT).apply {
+            this.timeZone = this@ExportFileNameBuilder.timeZone
+        }
     }
-}
-

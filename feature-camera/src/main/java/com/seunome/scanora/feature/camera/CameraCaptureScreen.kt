@@ -73,6 +73,8 @@ fun CameraCaptureScreen(
     val activity = context.findActivity()
     val lifecycleOwner = LocalLifecycleOwner.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val scannerUnavailableMessage = stringResource(id = R.string.camera_scanner_unavailable)
+    val captureFailedMessage = stringResource(id = R.string.camera_capture_failed)
     val imageCapture = remember {
         ImageCapture.Builder()
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
@@ -98,7 +100,9 @@ fun CameraCaptureScreen(
     }
 
     LaunchedEffect(state.errorMessage) {
-        state.errorMessage?.let(snackbarHostState::showSnackbar)
+        state.errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+        }
     }
 
     Scaffold(
@@ -118,7 +122,7 @@ fun CameraCaptureScreen(
                     IconButton(
                         onClick = {
                             if (activity == null) {
-                                onError(context.getString(R.string.camera_scanner_unavailable))
+                                onError(scannerUnavailableMessage)
                                 return@IconButton
                             }
                             val options = GmsDocumentScannerOptions.Builder()
@@ -138,7 +142,7 @@ fun CameraCaptureScreen(
                                     )
                                 }
                                 .addOnFailureListener {
-                                    onError(context.getString(R.string.camera_scanner_unavailable))
+                                    onError(scannerUnavailableMessage)
                                 }
                         },
                     ) {
@@ -185,7 +189,7 @@ fun CameraCaptureScreen(
                                     onCapturedImage(it)
                                 },
                                 onFailure = {
-                                    onError(context.getString(R.string.camera_capture_failed))
+                                    onError(captureFailedMessage)
                                 },
                             )
                         },

@@ -122,14 +122,20 @@ class EditorViewModel(
             errorMessage.value = result.errorMessage
             return
         }
+        if (result.sanitizedValue == uiState.value.scan?.title) return
         viewModelScope.launch {
             scanRepository.renameScan(scanId, result.sanitizedValue)
         }
     }
 
     fun updateTags(rawValue: String) {
+        val tags = rawValue
+            .split(",")
+            .map(String::trim)
+            .filter(String::isNotBlank)
+            .distinct()
+        if (tags == uiState.value.scan?.tags) return
         viewModelScope.launch {
-            val tags = rawValue.split(",").map(String::trim).filter(String::isNotBlank)
             scanRepository.updateTags(scanId, tags)
         }
     }
@@ -159,4 +165,3 @@ class EditorViewModel(
         errorMessage.update { null }
     }
 }
-

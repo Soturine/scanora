@@ -29,7 +29,7 @@ class DefaultDocumentProcessingRepository(
     private val context: Context,
 ) : DocumentProcessingRepository {
     override suspend fun estimateDocumentQuad(imageUri: String): DocumentQuad = withContext(Dispatchers.IO) {
-        val bitmap = loadBitmap(imageUri, maxDimension = 1600) ?: fallbackQuad(1600, 2200)
+        val bitmap = loadBitmap(imageUri, maxDimension = 1600) ?: return@withContext fallbackQuad(1600, 2200)
         val width = bitmap.width
         val height = bitmap.height
         val grayscale = toLumaArray(bitmap)

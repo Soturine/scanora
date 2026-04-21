@@ -4,7 +4,7 @@
 
 - Git
 - Android Studio com suporte a Kotlin e Compose
-- JDK 17
+- JDK 17 ou superior compatível com AGP 9
 - Android SDK Platform 36
 
 ## Fluxo sugerido
@@ -47,4 +47,3 @@ Preferência do projeto:
 - Há testes ou justificativa explícita para a ausência deles?
 - Strings novas foram preparadas para futura internacionalização?
 - Não houve introdução de dependência ou serviço externo desnecessário?
-

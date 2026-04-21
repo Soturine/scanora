@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -70,22 +72,35 @@ fun ExportScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
+                    text = scan.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+                Text(
+                    text = stringResource(
+                        id = R.string.export_summary,
+                        scan.pageCount,
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (state.isExporting) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    Text(
+                        text = stringResource(id = R.string.export_processing_message),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Text(
                     text = stringResource(id = R.string.export_format_section),
                     style = MaterialTheme.typography.titleLarge,
                 )
                 ExportFormat.entries.forEach { format ->
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
+                    SelectableExportOptionButton(
+                        label = format.title,
+                        selected = state.selectedFormat == format,
                         onClick = { onSelectFormat(format) },
-                    ) {
-                        Text(
-                            text = if (state.selectedFormat == format) {
-                                "${format.title} | selecionado"
-                            } else {
-                                format.title
-                            },
-                        )
-                    }
+                    )
                 }
 
                 Text(
@@ -93,18 +108,11 @@ fun ExportScreen(
                     style = MaterialTheme.typography.titleLarge,
                 )
                 PdfQuality.entries.forEach { quality ->
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
+                    SelectableExportOptionButton(
+                        label = quality.title,
+                        selected = state.selectedQuality == quality,
                         onClick = { onSelectQuality(quality) },
-                    ) {
-                        Text(
-                            text = if (state.selectedQuality == quality) {
-                                "${quality.title} | selecionado"
-                            } else {
-                                quality.title
-                            },
-                        )
-                    }
+                    )
                 }
 
                 Button(
@@ -131,6 +139,29 @@ fun ExportScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SelectableExportOptionButton(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    if (selected) {
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onClick,
+        ) {
+            Text(text = label)
+        }
+    } else {
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onClick,
+        ) {
+            Text(text = label)
         }
     }
 }

@@ -12,7 +12,6 @@ class DateFormatter(
     fun format(timestamp: Long): String {
         val formatter = SimpleDateFormat("dd MMM yyyy, HH:mm", locale)
         formatter.timeZone = timeZone
-        return formatter.format(Date(timestamp))
+        return formatter.format(Date(timestamp)).replace(".", "")
     }
 }
-

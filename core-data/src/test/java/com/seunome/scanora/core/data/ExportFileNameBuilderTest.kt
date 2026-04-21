@@ -3,24 +3,18 @@ package com.seunome.scanora.core.data
 import com.google.common.truth.Truth.assertThat
 import com.seunome.scanora.core.common.model.ExportFormat
 import com.seunome.scanora.core.data.export.ExportFileNameBuilder
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
 import org.junit.Test
 
 class ExportFileNameBuilderTest {
     private val builder = ExportFileNameBuilder(
-        clock = Clock.fixed(
-            Instant.parse("2026-04-21T12:30:45Z"),
-            ZoneId.of("America/Sao_Paulo"),
-        ),
+        currentTimeMillis = { 1_776_774_645_000L },
     )
 
     @Test
     fun `deve gerar nome base sanitizado`() {
         val fileName = builder.buildBaseName("Contrato João / Abril", ExportFormat.PDF)
 
-        assertThat(fileName).isEqualTo("contrato-jo-o-abril-20260421-093045.pdf")
+        assertThat(fileName).isEqualTo("contrato-joao-abril-20260421-093045.pdf")
     }
 
     @Test
