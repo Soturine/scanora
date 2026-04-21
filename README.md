@@ -5,6 +5,12 @@
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-DD8A2E)
 ![Version](https://img.shields.io/badge/version-0.1.0-133942)
 ![Status](https://img.shields.io/badge/status-MVP%20ativo-2E7D8C)
+[![Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml)
+[![Deploy Pages](https://github.com/Soturine/scanora/actions/workflows/pages.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/pages.yml)
+
+Repositorio: https://github.com/Soturine/scanora
+Site: https://soturine.github.io/scanora/
+Releases: https://github.com/Soturine/scanora/releases
 
 Scanora é um app Android original de escaneamento de documentos com foco em privacidade, processamento local e uma experiência rápida de captura, revisão e exportação.
 
@@ -106,4 +112,3 @@ Versão completa em [ROADMAP.md](ROADMAP.md).
 ## Status do projeto
 
 `0.1.0` representa um MVP funcional e escalável, pronto para refinamento técnico e polimento de produção.
-

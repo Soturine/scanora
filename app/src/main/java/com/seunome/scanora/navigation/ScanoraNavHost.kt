@@ -343,7 +343,7 @@ fun ScanoraNavHost(
                 onOpenPrivacyPolicy = {
                     val intent = Intent(
                         Intent.ACTION_VIEW,
-                        Uri.parse("https://github.com/seunome/scanora/blob/main/PRIVACY_POLICY.md"),
+                        Uri.parse("https://github.com/Soturine/scanora/blob/main/PRIVACY_POLICY.md"),
                     )
                     context.startActivity(intent)
                 },
