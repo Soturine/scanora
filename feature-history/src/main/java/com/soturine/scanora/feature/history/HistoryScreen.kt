@@ -1,12 +1,20 @@
 package com.soturine.scanora.feature.history
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -20,6 +28,7 @@ import com.soturine.scanora.core.common.model.ScanDocument
 import com.soturine.scanora.core.common.usecase.FormatScanDateUseCase
 import com.soturine.scanora.core.ui.component.EmptyStateCard
 import com.soturine.scanora.core.ui.component.PageThumbnailCard
+import com.soturine.scanora.core.ui.component.SectionHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,17 +52,28 @@ fun HistoryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
+                SectionHeader(
+                    eyebrow = stringResource(id = R.string.history_eyebrow),
+                    title = stringResource(id = R.string.history_heading),
+                    supportingText = if (state.scans.isEmpty()) {
+                        stringResource(id = R.string.history_supporting_empty)
+                    } else {
+                        stringResource(id = R.string.history_supporting, state.scans.size)
+                    },
+                )
+            }
+            item {
                 OutlinedTextField(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     value = state.query,
                     onValueChange = onQueryChange,
                     label = { Text(text = stringResource(id = R.string.history_search_label)) },
                     placeholder = { Text(text = stringResource(id = R.string.history_search_placeholder)) },
+                    singleLine = true,
                 )
             }
 
@@ -62,7 +82,6 @@ fun HistoryScreen(
                     EmptyStateCard(
                         title = stringResource(id = R.string.history_empty_title),
                         message = stringResource(id = R.string.history_empty_message),
-                        modifier = Modifier.padding(horizontal = 20.dp),
                     )
                 }
             } else {
@@ -75,8 +94,13 @@ fun HistoryScreen(
                             dateFormatter(scan.updatedAt),
                         ),
                         imageUri = scan.coverPage?.displayUri,
+                        overline = scan.mode.title,
+                        badge = when {
+                            scan.isFavorite -> stringResource(id = R.string.history_badge_favorite)
+                            scan.isDraft -> stringResource(id = R.string.history_badge_draft)
+                            else -> null
+                        },
                         onClick = { onOpenScan(scan.id) },
-                        modifier = Modifier.padding(horizontal = 20.dp),
                     )
                 }
             }
@@ -118,68 +142,95 @@ fun ScanDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
-                Text(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-                    text = stringResource(
-                        id = R.string.history_detail_meta,
-                        scan.pageCount,
-                        dateFormatter(scan.updatedAt),
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
                     ),
-                )
-            }
-            item {
-                androidx.compose.material3.Button(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
-                    onClick = onToggleFavorite,
                 ) {
-                    Text(
-                        text = if (scan.isFavorite) {
-                            stringResource(id = R.string.history_remove_favorite)
-                        } else {
-                            stringResource(id = R.string.history_add_favorite)
-                        },
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        SectionHeader(
+                            eyebrow = stringResource(id = R.string.history_detail_eyebrow),
+                            title = scan.title,
+                            supportingText = stringResource(
+                                id = R.string.history_detail_meta,
+                                scan.pageCount,
+                                dateFormatter(scan.updatedAt),
+                            ),
+                        )
+                        Text(
+                            text = if (scan.isDraft) {
+                                stringResource(id = R.string.history_detail_draft)
+                            } else {
+                                stringResource(id = R.string.history_detail_saved)
+                            },
+                            style = androidx.compose.material3.MaterialTheme.typography.labelLarge,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
             item {
-                androidx.compose.material3.Button(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    FilledTonalButton(
+                        modifier = Modifier.weight(1f),
+                        onClick = onToggleFavorite,
+                    ) {
+                        Text(
+                            text = if (scan.isFavorite) {
+                                stringResource(id = R.string.history_remove_favorite)
+                            } else {
+                                stringResource(id = R.string.history_add_favorite)
+                            },
+                        )
+                    }
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenExport,
+                    ) {
+                        Text(text = stringResource(id = R.string.history_open_export))
+                    }
+                }
+            }
+            item {
+                OutlinedButton(
+                    modifier = Modifier.fillMaxWidth(),
                     onClick = onOpenReview,
                 ) {
                     Text(text = stringResource(id = R.string.history_open_review))
                 }
             }
             item {
-                androidx.compose.material3.Button(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
-                    onClick = onOpenExport,
-                ) {
-                    Text(text = stringResource(id = R.string.history_open_export))
-                }
+                SectionHeader(
+                    eyebrow = stringResource(id = R.string.history_pages_eyebrow),
+                    title = stringResource(id = R.string.history_pages_section),
+                    supportingText = stringResource(id = R.string.history_pages_supporting),
+                )
             }
             items(scan.pages.sortedBy { it.index }, key = { it.id }) { page ->
                 PageThumbnailCard(
                     title = stringResource(id = R.string.history_page_title, page.index + 1),
                     subtitle = page.filterType.title,
                     imageUri = page.displayUri,
+                    overline = stringResource(id = R.string.history_page_overline),
+                    badge = if (page.ocrText.isNullOrBlank()) null else stringResource(id = R.string.history_page_badge_ocr),
                     onClick = { onOpenOcr(page.id) },
-                    modifier = Modifier.padding(horizontal = 20.dp),
                 )
             }
             item {
-                androidx.compose.material3.Button(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
+                OutlinedButton(
+                    modifier = Modifier.fillMaxWidth(),
                     onClick = onDeleteScan,
                 ) {
                     Text(text = stringResource(id = R.string.history_delete_scan))

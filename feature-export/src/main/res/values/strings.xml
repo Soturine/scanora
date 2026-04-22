@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="export_title">Exportar</string>
+    <string name="export_eyebrow">Saída final</string>
     <string name="export_missing_title">Nada para exportar</string>
     <string name="export_missing_message">Crie ou abra um lote antes de gerar arquivos.</string>
     <string name="export_summary">%1$d página(s) prontas para exportação.</string>
-    <string name="export_format_section">Formato de saída</string>
+    <string name="export_local_notice">Os arquivos são gerados localmente e podem ser compartilhados sem depender de backend.</string>
+    <string name="export_format_eyebrow">Formato</string>
+    <string name="export_format_section">Escolha a saída</string>
+    <string name="export_quality_eyebrow">Qualidade</string>
     <string name="export_quality_section">Qualidade do PDF</string>
-    <string name="export_processing_message">Gerando arquivos localmente. Isso pode levar alguns segundos.</string>
+    <string name="export_processing_message">Gerando arquivos no aparelho. Isso pode levar alguns segundos.</string>
     <string name="export_action">Gerar arquivos</string>
     <string name="export_success_message">%1$d arquivo(s) pronto(s) para compartilhar.</string>
-    <string name="export_share_action">Compartilhar exportação</string>
+    <string name="export_share_action">Compartilhar agora</string>
 </resources>

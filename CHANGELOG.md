@@ -2,6 +2,26 @@
 
 Este projeto segue Semantic Versioning e recomenda Conventional Commits no fluxo de contribuição.
 
+## [Unreleased]
+
+## [0.1.3] - 2026-04-22
+
+### Added
+
+- Novo conjunto de componentes visuais compartilhados em `core-ui` para seções, opções e hierarquia de conteúdo.
+- Hero mais forte na Home, novas superfícies de detalhe e OCR mais legível com prévia da página.
+
+### Changed
+
+- Tema visual refinado com paleta, formas e tipografia mais coerentes com a proposta de scanner de documentos.
+- Site público em `site/` redesenhado para ficar mais leve, mais escaneável e mais próximo de uma página de produto real.
+- README reorganizado com topo mais enxuto, seção objetiva do que o app já faz e melhor apresentação do CI.
+
+### Fixed
+
+- Microcopy PT-BR revisada nas telas principais para reduzir tom genérico e melhorar clareza das chamadas para ação.
+- Estados vazios, cards de histórico, seleção de opções e revisão de lote com melhor ritmo visual e consistência.
+
 ## [0.1.2] - 2026-04-22
 
 ### Added

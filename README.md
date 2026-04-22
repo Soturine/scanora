@@ -3,27 +3,33 @@
 ![Android](https://img.shields.io/badge/platform-Android-2E7D8C)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-23414B)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-DD8A2E)
-![Version](https://img.shields.io/badge/version-0.1.2-133942)
+![Version](https://img.shields.io/badge/version-0.1.3-133942)
 [![Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml)
 [![Deploy Pages](https://github.com/Soturine/scanora/actions/workflows/pages.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/pages.yml)
 
-Scanora é um app Android de escaneamento de documentos com foco em processamento local, OCR no dispositivo e um fluxo direto de captura, revisão e exportação.
+Scanora é um app Android de escaneamento de documentos com foco em processamento local, OCR no dispositivo e um fluxo enxuto de captura, revisão e exportação.
 
 Repositório: https://github.com/Soturine/scanora  
 Releases: https://github.com/Soturine/scanora/releases  
 Site: https://soturine.github.io/scanora/
 
+## O que o app já faz
+
+- captura manual com CameraX e fluxo guiado com ML Kit Document Scanner;
+- ajuste de corte, correção de perspectiva e filtros para documentos;
+- OCR local com cópia rápida do texto;
+- exportação em PDF, JPG e PNG com compartilhamento nativo;
+- histórico local com título, tags, favoritos e busca;
+- tema claro/escuro e arquitetura multimódulo pronta para evolução.
+
 ## Proposta de valor
 
-- escanear documentos, recibos e páginas de estudo sem upload obrigatório;
-- corrigir perspectiva, aplicar filtros e organizar lotes localmente;
-- exportar PDF, JPG e PNG com compartilhamento nativo do Android;
-- executar OCR local para copiar texto reconhecido com poucos toques.
+Scanora foi pensado para quem quer transformar páginas, contratos e recibos em arquivos legíveis sem depender de upload obrigatório. A proposta é sair da câmera até o arquivo final com o mínimo de atrito e com privacidade por padrão.
 
 ## Capturas
 
 Capturas reais em breve.  
-Enquanto isso, o repositório já está validado com build Android, lint e testes unitários passando no CI.
+O projeto já está validado com build Android, lint e testes unitários no CI.
 
 ## Stack
 
@@ -47,7 +53,7 @@ Enquanto isso, o repositório já está validado com build Android, lint e teste
 - `core-ui`: tema e componentes reutilizáveis
 - `feature-*`: telas e ViewModels por contexto funcional
 
-Documentação técnica:
+Referências técnicas:
 - [docs/architecture.md](docs/architecture.md)
 - [docs/decisions.md](docs/decisions.md)
 - [docs/setup.md](docs/setup.md)
@@ -61,27 +67,27 @@ Documentação técnica:
 3. Instale Android SDK Platform 36 e Build Tools 36.0.0.
 4. Rode `./gradlew assembleDebug` ou execute o módulo `app`.
 
-Package atual:
+Identidade do app:
 - `applicationId`: `com.soturine.scanora`
 - namespace base: `com.soturine.scanora`
 
-## GitHub e CI
+## CI e Pages
 
 - O workflow [Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml) builda o projeto, roda lint e testes unitários.
-- O site em GitHub Pages é publicado a partir de `site/`.
-- Para o Pages funcionar no repositório publicado, ative em `Settings > Pages > Source: GitHub Actions`.
+- O site público é publicado a partir de `site/`.
+- Para o GitHub Pages funcionar no repositório publicado, ative em `Settings > Pages > Source: GitHub Actions`.
 
 ## Privacidade
 
 - processamento local por padrão;
 - OCR e filtros executados no dispositivo sempre que possível;
-- sem backend obrigatório, login ou sync no MVP.
+- sem backend obrigatório, login ou sincronização no MVP.
 
 Política completa em [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 ## Status
 
-`0.1.2` representa um MVP funcional com estrutura mais limpa de repositório, package real e CI ativo. Ainda faltam capturas reais, QA visual em dispositivos e refinamentos para uma release 1.0.
+`0.1.3` representa um MVP funcional com CI ativo, base Android moderna, package real e uma apresentação pública mais madura. Ainda faltam capturas reais, QA visual em dispositivos e refinamentos para uma release 1.0.
 
 ## Contribuir
 

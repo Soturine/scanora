@@ -7,26 +7,28 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -37,6 +39,7 @@ import com.soturine.scanora.core.common.usecase.FormatScanDateUseCase
 import com.soturine.scanora.core.ui.component.EmptyStateCard
 import com.soturine.scanora.core.ui.component.ModeCard
 import com.soturine.scanora.core.ui.component.PageThumbnailCard
+import com.soturine.scanora.core.ui.component.SectionHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +55,11 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     val dateFormatter = remember { FormatScanDateUseCase() }
+    val heroChips = listOf(
+        stringResource(id = R.string.home_chip_local),
+        stringResource(id = R.string.home_chip_ocr),
+        stringResource(id = R.string.home_chip_export),
+    )
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 12),
     ) { uris: List<Uri> ->
@@ -63,10 +71,8 @@ fun HomeScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(text = stringResource(id = R.string.home_app_bar_title))
-                },
+            TopAppBar(
+                title = { Text(text = stringResource(id = R.string.home_app_bar_title)) },
                 actions = {
                     IconButton(onClick = onOpenHistory) {
                         Icon(
@@ -88,33 +94,48 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             item {
-                Card {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    ),
+                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                            .padding(22.dp),
+                        verticalArrangement = Arrangement.spacedBy(18.dp),
                     ) {
-                        Text(
-                            text = stringResource(id = R.string.home_hero_title),
-                            style = MaterialTheme.typography.headlineMedium,
+                        SectionHeader(
+                            eyebrow = stringResource(id = R.string.home_hero_eyebrow),
+                            title = stringResource(id = R.string.home_hero_title),
+                            supportingText = stringResource(id = R.string.home_hero_subtitle),
                         )
-                        Text(
-                            text = stringResource(id = R.string.home_hero_subtitle),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(heroChips) { chip ->
+                                Surface(
+                                    color = MaterialTheme.colorScheme.surface,
+                                    shape = MaterialTheme.shapes.small,
+                                ) {
+                                    Text(
+                                        text = chip,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        }
                         Button(
                             modifier = Modifier.fillMaxWidth(),
                             onClick = { onOpenCamera(state.selectedMode) },
                         ) {
                             Text(text = stringResource(id = R.string.home_scan_action))
                         }
-                        Button(
+                        FilledTonalButton(
                             modifier = Modifier.fillMaxWidth(),
                             onClick = {
                                 importLauncher.launch(
@@ -129,11 +150,14 @@ fun HomeScreen(
             }
 
             item {
-                Text(
-                    text = stringResource(id = R.string.home_mode_section),
-                    style = MaterialTheme.typography.titleLarge,
+                SectionHeader(
+                    eyebrow = stringResource(id = R.string.home_mode_eyebrow),
+                    title = stringResource(id = R.string.home_mode_section),
+                    supportingText = stringResource(id = R.string.home_mode_supporting),
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            item {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     ScanMode.entries.forEach { mode ->
                         ModeCard(
@@ -146,19 +170,14 @@ fun HomeScreen(
             }
 
             item {
-                OutlinedTextField(
-                    modifier = Modifier.fillMaxWidth(),
-                    value = state.query,
-                    onValueChange = onQueryChange,
-                    label = { Text(text = stringResource(id = R.string.home_search_label)) },
-                    placeholder = { Text(text = stringResource(id = R.string.home_search_placeholder)) },
-                )
-            }
-
-            item {
-                Text(
-                    text = stringResource(id = R.string.home_recent_section),
-                    style = MaterialTheme.typography.titleLarge,
+                SectionHeader(
+                    eyebrow = stringResource(id = R.string.home_recent_eyebrow),
+                    title = stringResource(id = R.string.home_recent_section),
+                    supportingText = if (state.recentScans.isEmpty()) {
+                        stringResource(id = R.string.home_recent_empty_supporting)
+                    } else {
+                        stringResource(id = R.string.home_recent_supporting, state.recentScans.size)
+                    },
                 )
             }
 
@@ -170,6 +189,16 @@ fun HomeScreen(
                     )
                 }
             } else {
+                item {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = state.query,
+                        onValueChange = onQueryChange,
+                        label = { Text(text = stringResource(id = R.string.home_search_label)) },
+                        placeholder = { Text(text = stringResource(id = R.string.home_search_placeholder)) },
+                        singleLine = true,
+                    )
+                }
                 items(state.recentScans, key = { it.id }) { scan ->
                     PageThumbnailCard(
                         title = scan.title,
@@ -179,6 +208,12 @@ fun HomeScreen(
                             dateFormatter(scan.updatedAt),
                         ),
                         imageUri = scan.coverPage?.displayUri,
+                        overline = scan.mode.title,
+                        badge = when {
+                            scan.isFavorite -> stringResource(id = R.string.home_badge_favorite)
+                            scan.isDraft -> stringResource(id = R.string.home_badge_draft)
+                            else -> null
+                        },
                         onClick = { onOpenScan(scan.id) },
                     )
                 }

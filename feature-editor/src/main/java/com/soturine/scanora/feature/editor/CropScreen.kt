@@ -11,9 +11,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -34,6 +38,8 @@ import com.soturine.scanora.core.common.model.DocumentQuad
 import com.soturine.scanora.core.common.model.PointValue
 import com.soturine.scanora.core.ui.component.AsyncUriImage
 import com.soturine.scanora.core.ui.component.EmptyStateCard
+import com.soturine.scanora.core.ui.component.OptionCard
+import com.soturine.scanora.core.ui.component.SectionHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,25 +88,31 @@ fun CropScreen(
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(
-                    text = stringResource(id = R.string.editor_crop_helper),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                SectionHeader(
+                    eyebrow = stringResource(id = R.string.editor_crop_eyebrow),
+                    title = stringResource(id = R.string.editor_crop_heading),
+                    supportingText = stringResource(id = R.string.editor_crop_helper),
                 )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(420.dp),
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    ),
                 ) {
-                    AsyncUriImage(
-                        imageUri = page.displayUri,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    QuadEditorOverlay(
-                        quad = localQuad,
-                        onQuadChange = { localQuad = it },
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(430.dp),
+                    ) {
+                        AsyncUriImage(
+                            imageUri = page.displayUri,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        QuadEditorOverlay(
+                            quad = localQuad,
+                            onQuadChange = { localQuad = it },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
                 }
                 Button(
                     modifier = Modifier.fillMaxWidth(),
@@ -159,31 +171,34 @@ fun FilterScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                AsyncUriImage(
-                    imageUri = page.displayUri,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(420.dp),
+                SectionHeader(
+                    eyebrow = stringResource(id = R.string.editor_filter_eyebrow),
+                    title = stringResource(id = R.string.editor_filter_heading),
+                    supportingText = stringResource(id = R.string.editor_filter_helper),
                 )
-                Text(
-                    text = stringResource(id = R.string.editor_filter_helper),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DocumentFilterType.entries.forEach { filter ->
-                        Button(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = { onApplyFilter(filter) },
-                            enabled = !state.isProcessing,
-                        ) {
-                            Text(text = filter.title)
-                        }
-                    }
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    ),
+                ) {
+                    AsyncUriImage(
+                        imageUri = page.displayUri,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(330.dp),
+                    )
                 }
-                Button(
+                DocumentFilterType.entries.forEach { filter ->
+                    OptionCard(
+                        title = filter.title,
+                        subtitle = filter.description(),
+                        selected = page.filterType == filter,
+                        onClick = { onApplyFilter(filter) },
+                    )
+                }
+                FilledTonalButton(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onRotate,
                     enabled = !state.isProcessing,
@@ -264,43 +279,75 @@ fun ReviewScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            androidx.compose.material3.OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = title,
-                onValueChange = { title = it },
-                label = { Text(text = stringResource(id = R.string.editor_document_name)) },
-            )
-            OutlinedButton(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { onRename(title) },
-                enabled = hasTitleChanges,
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
             ) {
-                Text(text = stringResource(id = R.string.editor_save_name))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    SectionHeader(
+                        eyebrow = stringResource(id = R.string.editor_review_eyebrow),
+                        title = title,
+                        supportingText = stringResource(
+                            id = R.string.editor_review_summary,
+                            orderedPages.size,
+                        ),
+                    )
+                    Text(
+                        text = stringResource(id = R.string.editor_review_helper),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
-            androidx.compose.material3.OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = tags,
-                onValueChange = { tags = it },
-                label = { Text(text = stringResource(id = R.string.editor_tags)) },
-                supportingText = { Text(text = stringResource(id = R.string.editor_tags_helper)) },
-            )
-            OutlinedButton(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { onUpdateTags(tags) },
-                enabled = hasTagChanges,
-            ) {
-                Text(text = stringResource(id = R.string.editor_save_tags))
+            Card {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text(text = stringResource(id = R.string.editor_document_name)) },
+                        singleLine = true,
+                    )
+                    OutlinedButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onRename(title) },
+                        enabled = hasTitleChanges,
+                    ) {
+                        Text(text = stringResource(id = R.string.editor_save_name))
+                    }
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = tags,
+                        onValueChange = { tags = it },
+                        label = { Text(text = stringResource(id = R.string.editor_tags)) },
+                        supportingText = { Text(text = stringResource(id = R.string.editor_tags_helper)) },
+                    )
+                    OutlinedButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onUpdateTags(tags) },
+                        enabled = hasTagChanges,
+                    ) {
+                        Text(text = stringResource(id = R.string.editor_save_tags))
+                    }
+                }
             }
-            Text(
-                text = stringResource(id = R.string.editor_review_helper),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = stringResource(id = R.string.editor_pages_section),
-                style = MaterialTheme.typography.titleLarge,
+            SectionHeader(
+                eyebrow = stringResource(id = R.string.editor_pages_eyebrow),
+                title = stringResource(id = R.string.editor_pages_section),
+                supportingText = stringResource(id = R.string.editor_pages_supporting),
             )
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -328,14 +375,14 @@ fun ReviewScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Button(
+                FilledTonalButton(
                     modifier = Modifier.weight(1f),
                     onClick = onOpenCrop,
                     enabled = state.currentPage != null,
                 ) {
                     Text(text = stringResource(id = R.string.editor_open_crop))
                 }
-                Button(
+                FilledTonalButton(
                     modifier = Modifier.weight(1f),
                     onClick = onOpenFilters,
                     enabled = state.currentPage != null,
@@ -347,7 +394,7 @@ fun ReviewScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Button(
+                OutlinedButton(
                     modifier = Modifier.weight(1f),
                     onClick = onDeleteCurrentPage,
                     enabled = state.currentPage != null,
@@ -378,20 +425,27 @@ private fun PageActionsCard(
     canMoveUp: Boolean,
     canMoveDown: Boolean,
 ) {
-    androidx.compose.material3.Card(
+    Card(
         modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) {
+                MaterialTheme.colorScheme.surfaceContainerHigh
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
+        ),
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             AsyncUriImage(
                 imageUri = imageUri,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(160.dp),
+                    .height(164.dp),
             )
-            Text(text = title, style = MaterialTheme.typography.titleLarge)
+            Text(text = title, style = MaterialTheme.typography.titleMedium)
             Text(
                 text = if (selected) {
                     stringResource(id = R.string.editor_page_subtitle_selected, subtitle)
@@ -401,9 +455,12 @@ private fun PageActionsCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 Button(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.weight(1f),
                     onClick = onSelect,
                     enabled = !selected,
                 ) {
@@ -415,25 +472,30 @@ private fun PageActionsCard(
                         },
                     )
                 }
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = onOpenOcr,
+                ) {
+                    Text(text = stringResource(id = R.string.editor_open_ocr))
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
                     onClick = onMoveUp,
                     enabled = canMoveUp,
                 ) {
                     Text(text = stringResource(id = R.string.editor_move_up))
                 }
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
                     onClick = onMoveDown,
                     enabled = canMoveDown,
                 ) {
                     Text(text = stringResource(id = R.string.editor_move_down))
-                }
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = onOpenOcr,
-                ) {
-                    Text(text = stringResource(id = R.string.editor_open_ocr))
                 }
             }
         }
@@ -447,3 +509,11 @@ private fun defaultQuad(): DocumentQuad =
         bottomRight = PointValue(0.92f, 0.92f),
         bottomLeft = PointValue(0.08f, 0.92f),
     )
+
+private fun DocumentFilterType.description(): String = when (this) {
+    DocumentFilterType.ORIGINAL_CORRECTED -> "Corrige perspectiva e mantém cores naturais do documento."
+    DocumentFilterType.DOCUMENT_BLACK_WHITE -> "Prioriza contraste alto para impressão e texto."
+    DocumentFilterType.DOCUMENT_GRAY -> "Reduz ruído visual mantendo leitura confortável."
+    DocumentFilterType.COLOR_ENHANCED -> "Realça cores sem deixar a página artificial."
+    DocumentFilterType.RECEIPT_HIGH_CONTRAST -> "Melhora recibos térmicos e documentos com pouco contraste."
+}

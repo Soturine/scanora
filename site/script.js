@@ -1,8 +1,9 @@
-document.querySelectorAll(".link-card").forEach((card) => {
-  card.addEventListener("mouseenter", () => {
-    card.style.transform = "translateY(-2px)";
-  });
-  card.addEventListener("mouseleave", () => {
-    card.style.transform = "translateY(0)";
-  });
-});
+const nav = document.querySelector(".nav");
+
+const syncNavState = () => {
+  if (!nav) return;
+  nav.classList.toggle("is-scrolled", window.scrollY > 18);
+};
+
+syncNavState();
+window.addEventListener("scroll", syncNavState, { passive: true });
