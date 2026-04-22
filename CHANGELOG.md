@@ -4,6 +4,27 @@ Este projeto segue Semantic Versioning e recomenda Conventional Commits no fluxo
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-04-22
+
+### Added
+
+- Prévia leve e assíncrona para filtros, usando bitmap reduzido antes da aplicação final.
+- Estado dedicado de prévia no editor para separar seleção visual de processamento definitivo.
+
+### Changed
+
+- `CropScreen` agora mostra a imagem original inteira com `ContentScale.Fit` e overlay alinhado à área real do preview.
+- `FilterScreen` foi reorganizada com `Scaffold`, `TopAppBar` com voltar, preview central mais limpo e CTA fixa no rodapé.
+- Pipeline local de detecção inicial de cantos foi reforçado com suavização de luma, projeção de bordas e limites mais estáveis.
+- Carregamento de imagem assíncrono passou a usar decode em background e amostragem menor para reduzir custo visual.
+
+### Fixed
+
+- Ajuste manual dos quatro pontos deixou de usar coordenadas desalinhadas com o preview e ficou mais responsivo ao toque.
+- Handles do crop ganharam área de toque maior e perderam a sensação de arrasto preso durante o gesto.
+- Risco de ANR na tela de filtros foi reduzido ao evitar decode pesado e processamento síncrono na main thread.
+- Fluxo do editor ficou mais direto, com menos texto e com ações principais mais claras.
+
 ## [0.1.3] - 2026-04-22
 
 ### Added

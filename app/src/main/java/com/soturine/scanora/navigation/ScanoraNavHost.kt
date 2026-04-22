@@ -173,6 +173,8 @@ fun ScanoraNavHost(
                 onContinue = {
                     navController.navigate(ScanoraDestinations.filters(scanId, pageId))
                 },
+                onEnsureQuad = editorViewModel::ensureQuadForCurrentPage,
+                onBack = { navController.popBackStack() },
                 onClearMessage = editorViewModel::clearMessage,
             )
         }
@@ -197,8 +199,10 @@ fun ScanoraNavHost(
             FilterScreen(
                 state = state.value,
                 onApplyFilter = editorViewModel::applyFilter,
+                onRequestPreview = editorViewModel::prepareFilterPreview,
                 onRotate = editorViewModel::rotateCurrentPage,
                 onOpenReview = { navController.navigate(ScanoraDestinations.review(scanId)) },
+                onBack = { navController.popBackStack() },
                 onClearMessage = editorViewModel::clearMessage,
             )
         }

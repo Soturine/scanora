@@ -1,5 +1,7 @@
 package com.soturine.scanora.core.ui.component
 
+import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.foundation.Image
@@ -9,30 +11,40 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntSize
 import java.io.File
+import kotlin.math.max
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun AsyncUriImage(
     imageUri: String?,
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop,
+    maxDimension: Int = 2048,
+    rotationDegrees: Float = 0f,
+    onBitmapLoaded: ((IntSize) -> Unit)? = null,
 ) {
     val context = LocalContext.current
-    val bitmap by produceState<android.graphics.Bitmap?>(initialValue = null, key1 = imageUri) {
-        value = imageUri?.let { rawUri ->
-            val uri = Uri.parse(rawUri)
-            val stream = when {
-                uri.scheme.isNullOrBlank() -> File(rawUri).inputStream()
-                else -> context.contentResolver.openInputStream(uri)
-            }
-            stream?.use(BitmapFactory::decodeStream)
+    val bitmap by produceState<Bitmap?>(initialValue = null, key1 = imageUri, key2 = maxDimension) {
+        value = withContext(Dispatchers.IO) {
+            imageUri?.let { decodeBitmapForPreview(context, it, maxDimension) }
+        }
+    }
+
+    LaunchedEffect(bitmap, onBitmapLoaded) {
+        bitmap?.let { loaded ->
+            onBitmapLoaded?.invoke(IntSize(loaded.width, loaded.height))
         }
     }
 
@@ -44,7 +56,9 @@ fun AsyncUriImage(
             Image(
                 bitmap = bitmap!!.asImageBitmap(),
                 contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { rotationZ = rotationDegrees },
                 contentScale = contentScale,
             )
         } else {
@@ -53,3 +67,51 @@ fun AsyncUriImage(
     }
 }
 
+private fun decodeBitmapForPreview(
+    context: Context,
+    imageUri: String,
+    maxDimension: Int,
+): Bitmap? {
+    if (imageUri.isBlank()) return null
+    val uri = Uri.parse(imageUri)
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    openInputStream(context, uri)?.use { stream ->
+        BitmapFactory.decodeStream(stream, null, bounds)
+    }
+
+    val sampleSize = calculateInSampleSize(
+        width = bounds.outWidth,
+        height = bounds.outHeight,
+        maxDimension = maxDimension,
+    )
+    val options = BitmapFactory.Options().apply {
+        inSampleSize = sampleSize
+        inPreferredConfig = Bitmap.Config.ARGB_8888
+    }
+    return openInputStream(context, uri)?.use { stream ->
+        BitmapFactory.decodeStream(stream, null, options)
+    }
+}
+
+private fun calculateInSampleSize(
+    width: Int,
+    height: Int,
+    maxDimension: Int,
+): Int {
+    val largestSide = max(width, height).coerceAtLeast(1)
+    if (largestSide <= maxDimension) return 1
+
+    var sampleSize = 1
+    while (largestSide / sampleSize > maxDimension) {
+        sampleSize *= 2
+    }
+    return sampleSize
+}
+
+private fun openInputStream(
+    context: Context,
+    uri: Uri,
+) = when {
+    uri.scheme.isNullOrBlank() -> File(uri.toString()).inputStream()
+    else -> context.contentResolver.openInputStream(uri)
+}

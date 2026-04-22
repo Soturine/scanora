@@ -33,10 +33,18 @@ class DefaultDocumentProcessingRepository(
         val width = bitmap.width
         val height = bitmap.height
         val grayscale = toLumaArray(bitmap)
-        val edgeMagnitude = sobelEdges(grayscale, width, height)
+        val denoised = smoothLuma(grayscale, width, height)
+        val edgeMagnitude = sobelEdges(denoised, width, height)
         val averageEdge = edgeMagnitude.average().toFloat()
-        val threshold = max(28f, averageEdge * 1.35f)
-        val bounds = detectBounds(edgeMagnitude, width, height, threshold)
+        val strongThreshold = max(22f, averageEdge * 1.18f)
+        val denseThreshold = strongThreshold * 0.82f
+        val bounds = detectBounds(
+            edgeMagnitude = edgeMagnitude,
+            width = width,
+            height = height,
+            strongThreshold = strongThreshold,
+            denseThreshold = denseThreshold,
+        )
         bounds?.let { rect ->
             DocumentQuad(
                 topLeft = PointValue(rect.left / width.toFloat(), rect.top / height.toFloat()),
@@ -47,19 +55,55 @@ class DefaultDocumentProcessingRepository(
         } ?: fallbackQuad(width, height)
     }
 
+    override suspend fun renderPreview(
+        sourceUri: String,
+        filterType: DocumentFilterType,
+        quad: DocumentQuad?,
+        rotationDegrees: Int,
+    ): String = renderPage(
+        sourceUri = sourceUri,
+        filterType = filterType,
+        quad = quad,
+        rotationDegrees = rotationDegrees,
+        maxDimension = 1280,
+        quality = 84,
+        prefix = "${filterType.storageKey}-preview",
+    )
+
     override suspend fun processPage(
         sourceUri: String,
         filterType: DocumentFilterType,
         quad: DocumentQuad?,
         rotationDegrees: Int,
+    ): String = renderPage(
+        sourceUri = sourceUri,
+        filterType = filterType,
+        quad = quad,
+        rotationDegrees = rotationDegrees,
+        maxDimension = 2200,
+        quality = 92,
+        prefix = filterType.storageKey,
+    )
+
+    private suspend fun renderPage(
+        sourceUri: String,
+        filterType: DocumentFilterType,
+        quad: DocumentQuad?,
+        rotationDegrees: Int,
+        maxDimension: Int,
+        quality: Int,
+        prefix: String,
     ): String = withContext(Dispatchers.IO) {
-        var bitmap = loadBitmap(sourceUri, maxDimension = 2200) ?: error("Não foi possível abrir a imagem.")
-        if (rotationDegrees % 360 != 0) {
-            bitmap = rotateBitmap(bitmap, rotationDegrees.toFloat())
+        var bitmap = loadBitmap(sourceUri, maxDimension = maxDimension) ?: error("Não foi possível abrir a imagem.")
+        val normalizedRotation = normalizeRotation(rotationDegrees)
+        if (normalizedRotation != 0) {
+            bitmap = rotateBitmap(bitmap, normalizedRotation.toFloat())
         }
 
+        val baseQuad = quad ?: estimateDocumentQuad(sourceUri)
+        val rotatedQuad = rotateQuad(baseQuad, normalizedRotation)
         val effectiveQuad = scaleQuadToBitmap(
-            quad = quad ?: estimateDocumentQuad(sourceUri),
+            quad = rotatedQuad,
             width = bitmap.width,
             height = bitmap.height,
         )
@@ -73,7 +117,11 @@ class DefaultDocumentProcessingRepository(
             DocumentFilterType.RECEIPT_HIGH_CONTRAST -> receiptHighContrast(processed)
         }
 
-        saveBitmap(processed, prefix = filterType.storageKey)
+        saveBitmap(
+            bitmap = processed,
+            prefix = prefix,
+            quality = quality,
+        )
     }
 
     private fun enhanceOriginal(bitmap: Bitmap): Bitmap {
@@ -171,7 +219,7 @@ class DefaultDocumentProcessingRepository(
         val height = bitmap.height
         val source = IntArray(width * height)
         bitmap.getPixels(source, 0, width, 0, 0, width, height)
-        val output = IntArray(source.size)
+        val output = source.copyOf()
         val kernel = intArrayOf(
             0, -1, 0,
             -1, 5, -1,
@@ -206,6 +254,33 @@ class DefaultDocumentProcessingRepository(
         val matrix = Matrix().apply { postRotate(degrees) }
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
+
+    private fun rotateQuad(
+        quad: DocumentQuad,
+        rotationDegrees: Int,
+    ): DocumentQuad {
+        val rotations = ((rotationDegrees % 360) + 360) % 360 / 90
+
+        fun rotatePoint90(point: PointValue): PointValue =
+            PointValue(
+                x = 1f - point.y,
+                y = point.x,
+            )
+
+        var rotated = quad
+        repeat(rotations) {
+            rotated = DocumentQuad(
+                topLeft = rotatePoint90(rotated.bottomLeft),
+                topRight = rotatePoint90(rotated.topLeft),
+                bottomRight = rotatePoint90(rotated.topRight),
+                bottomLeft = rotatePoint90(rotated.bottomRight),
+            )
+        }
+        return rotated
+    }
+
+    private fun normalizeRotation(rotationDegrees: Int): Int =
+        ((rotationDegrees % 360) + 360) % 360
 
     private fun warpPerspective(bitmap: Bitmap, quad: DocumentQuad): Bitmap {
         val targetWidth = max(
@@ -245,6 +320,87 @@ class DefaultDocumentProcessingRepository(
         edgeMagnitude: FloatArray,
         width: Int,
         height: Int,
+        strongThreshold: Float,
+        denseThreshold: Float,
+    ): Rect? {
+        val projected = detectProjectedBounds(edgeMagnitude, width, height, denseThreshold)
+        val raw = detectStrongEdgeExtents(edgeMagnitude, width, height, strongThreshold)
+        val merged = when {
+            projected != null && raw != null -> mergeBounds(projected, raw)
+            projected != null -> projected
+            raw != null -> raw
+            else -> null
+        } ?: return null
+
+        val minWidth = (width * 0.34f).roundToInt()
+        val minHeight = (height * 0.34f).roundToInt()
+        if ((merged.width()) < minWidth || (merged.height()) < minHeight) return null
+
+        val insetX = (merged.width() * 0.035f).roundToInt()
+        val insetY = (merged.height() * 0.035f).roundToInt()
+        return Rect(
+            max(merged.left - insetX, 0),
+            max(merged.top - insetY, 0),
+            min(merged.right + insetX, width - 1),
+            min(merged.bottom + insetY, height - 1),
+        )
+    }
+
+    private fun detectProjectedBounds(
+        edgeMagnitude: FloatArray,
+        width: Int,
+        height: Int,
+        threshold: Float,
+    ): Rect? {
+        val rowScores = FloatArray(height)
+        val columnScores = FloatArray(width)
+
+        for (y in 0 until height) {
+            var rowScore = 0f
+            for (x in 0 until width) {
+                val edge = edgeMagnitude[y * width + x]
+                if (edge < threshold) continue
+                rowScore += edge
+                columnScores[x] += edge
+            }
+            rowScores[y] = rowScore
+        }
+
+        val top = findBoundary(rowScores, fromStart = true)
+        val bottom = findBoundary(rowScores, fromStart = false)
+        val left = findBoundary(columnScores, fromStart = true)
+        val right = findBoundary(columnScores, fromStart = false)
+
+        if (top == -1 || bottom == -1 || left == -1 || right == -1) return null
+        if (left >= right || top >= bottom) return null
+        return Rect(left, top, right, bottom)
+    }
+
+    private fun findBoundary(
+        scores: FloatArray,
+        fromStart: Boolean,
+    ): Int {
+        if (scores.isEmpty()) return -1
+        val maxScore = scores.maxOrNull() ?: return -1
+        val threshold = max(maxScore * 0.16f, 12f)
+        val margin = (scores.size * 0.02f).roundToInt()
+        val range = if (fromStart) {
+            margin until scores.size - margin
+        } else {
+            (scores.size - margin - 1) downTo margin
+        }
+        for (index in range) {
+            if (scores[index] >= threshold) {
+                return index
+            }
+        }
+        return -1
+    }
+
+    private fun detectStrongEdgeExtents(
+        edgeMagnitude: FloatArray,
+        width: Int,
+        height: Int,
         threshold: Float,
     ): Rect? {
         var left = width
@@ -262,19 +418,38 @@ class DefaultDocumentProcessingRepository(
             }
         }
         if (left >= right || top >= bottom) return null
+        return Rect(left, top, right, bottom)
+    }
 
-        val minWidth = (width * 0.35f).roundToInt()
-        val minHeight = (height * 0.35f).roundToInt()
-        if ((right - left) < minWidth || (bottom - top) < minHeight) return null
-
-        val insetX = ((right - left) * 0.03f).roundToInt()
-        val insetY = ((bottom - top) * 0.03f).roundToInt()
-        return Rect(
-            max(left - insetX, 0),
-            max(top - insetY, 0),
-            min(right + insetX, width - 1),
-            min(bottom + insetY, height - 1),
+    private fun mergeBounds(
+        projected: Rect,
+        raw: Rect,
+    ): Rect =
+        Rect(
+            ((projected.left + raw.left) / 2f).roundToInt(),
+            ((projected.top + raw.top) / 2f).roundToInt(),
+            ((projected.right + raw.right) / 2f).roundToInt(),
+            ((projected.bottom + raw.bottom) / 2f).roundToInt(),
         )
+
+    private fun smoothLuma(
+        luma: IntArray,
+        width: Int,
+        height: Int,
+    ): IntArray {
+        val output = luma.copyOf()
+        for (y in 1 until height - 1) {
+            for (x in 1 until width - 1) {
+                var total = 0
+                for (ky in -1..1) {
+                    for (kx in -1..1) {
+                        total += luma[(y + ky) * width + (x + kx)]
+                    }
+                }
+                output[y * width + x] = total / 9
+            }
+        }
+        return output
     }
 
     private fun sobelEdges(
@@ -373,11 +548,12 @@ class DefaultDocumentProcessingRepository(
     private fun saveBitmap(
         bitmap: Bitmap,
         prefix: String,
+        quality: Int,
     ): String {
         val dir = File(context.cacheDir, "processed").apply { mkdirs() }
         val file = File(dir, "${prefix}-${System.currentTimeMillis()}.jpg")
         FileOutputStream(file).use { stream ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 92, stream)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, stream)
         }
         return Uri.fromFile(file).toString()
     }

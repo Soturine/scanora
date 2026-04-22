@@ -7,6 +7,7 @@ data class EditorUiState(
     val scan: ScanDocument? = null,
     val currentPage: ScanPage? = null,
     val isProcessing: Boolean = false,
+    val isPreviewLoading: Boolean = false,
+    val previewImageUri: String? = null,
     val errorMessage: String? = null,
 )
-

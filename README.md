@@ -3,7 +3,7 @@
 ![Android](https://img.shields.io/badge/platform-Android-2E7D8C)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-23414B)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-DD8A2E)
-![Version](https://img.shields.io/badge/version-0.1.3-133942)
+![Version](https://img.shields.io/badge/version-0.1.4-133942)
 [![Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml)
 [![Deploy Pages](https://github.com/Soturine/scanora/actions/workflows/pages.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/pages.yml)
 
@@ -87,7 +87,7 @@ Política completa em [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 ## Status
 
-`0.1.3` representa um MVP funcional com CI ativo, base Android moderna, package real e uma apresentação pública mais madura. Ainda faltam capturas reais, QA visual em dispositivos e refinamentos para uma release 1.0.
+`0.1.4` estabiliza o fluxo manual com crop mais confiável, filtros mais claros e uma base menos propensa a travamentos. Ainda faltam capturas reais, o fluxo rápido com o scanner do Google e mais polimento de OCR para uma release 1.0.
 
 ## Contribuir
 
