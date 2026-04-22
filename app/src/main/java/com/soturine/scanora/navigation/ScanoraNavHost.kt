@@ -83,19 +83,29 @@ fun ScanoraNavHost(
             val state = homeViewModel.uiState.collectAsStateWithLifecycle()
             HomeScreen(
                 state = state.value,
-                onOpenCamera = { mode ->
+                onStartQuickScan = { mode, uris ->
+                    coroutineScope.launch {
+                        createDraftScan(
+                            container = container,
+                            mode = mode,
+                            uris = uris,
+                        )?.let { (scanId, _) ->
+                            navController.navigate(ScanoraDestinations.review(scanId))
+                        }
+                    }
+                },
+                onOpenManualCamera = { mode ->
                     navController.navigate(ScanoraDestinations.camera(mode))
                 },
                 onImportImages = { mode, uris ->
                     coroutineScope.launch {
-                        createDraftAndOpenEditor(
+                        createDraftScan(
                             container = container,
                             mode = mode,
                             uris = uris,
-                            nav = { scanId, pageId ->
-                                navController.navigate(ScanoraDestinations.crop(scanId, pageId))
-                            },
-                        )
+                        )?.let { (scanId, pageId) ->
+                            navController.navigate(ScanoraDestinations.crop(scanId, pageId))
+                        }
                     }
                 },
                 onModeSelected = homeViewModel::onModeSelected,
@@ -121,26 +131,24 @@ fun ScanoraNavHost(
                 onPermissionResult = cameraViewModel::onPermissionResult,
                 onCapturedImage = { uri ->
                     coroutineScope.launch {
-                        createDraftAndOpenEditor(
+                        createDraftScan(
                             container = container,
                             mode = mode,
                             uris = listOf(uri),
-                            nav = { scanId, pageId ->
-                                navController.navigate(ScanoraDestinations.crop(scanId, pageId))
-                            },
-                        )
+                        )?.let { (scanId, pageId) ->
+                            navController.navigate(ScanoraDestinations.crop(scanId, pageId))
+                        }
                     }
                 },
                 onCapturedBatch = { uris ->
                     coroutineScope.launch {
-                        createDraftAndOpenEditor(
+                        createDraftScan(
                             container = container,
                             mode = mode,
                             uris = uris,
-                            nav = { scanId, pageId ->
-                                navController.navigate(ScanoraDestinations.crop(scanId, pageId))
-                            },
-                        )
+                        )?.let { (scanId, pageId) ->
+                            navController.navigate(ScanoraDestinations.crop(scanId, pageId))
+                        }
                     }
                 },
                 onBack = { navController.popBackStack() },
@@ -243,6 +251,7 @@ fun ScanoraNavHost(
                 onOpenOcr = { pageId ->
                     navController.navigate(ScanoraDestinations.ocr(scanId, pageId))
                 },
+                onBack = { navController.popBackStack() },
             )
         }
         composable(ScanoraDestinations.History) {
@@ -302,6 +311,7 @@ fun ScanoraNavHost(
                 onSelectQuality = exportViewModel::selectQuality,
                 onExport = exportViewModel::export,
                 onShare = { files -> shareFiles(context, files) },
+                onBack = { navController.popBackStack() },
                 onClearMessage = exportViewModel::clearMessage,
             )
         }
@@ -326,6 +336,7 @@ fun ScanoraNavHost(
             OcrScreen(
                 state = state.value,
                 onRecognizeAgain = ocrViewModel::recognize,
+                onBack = { navController.popBackStack() },
                 onClearMessage = ocrViewModel::clearMessage,
             )
         }
@@ -357,13 +368,12 @@ fun ScanoraNavHost(
     }
 }
 
-private suspend fun createDraftAndOpenEditor(
+private suspend fun createDraftScan(
     container: AppContainer,
     mode: ScanMode,
     uris: List<String>,
-    nav: (String, String) -> Unit,
-) {
-    if (uris.isEmpty()) return
+): Pair<String, String>? {
+    if (uris.isEmpty()) return null
     val formatter = SimpleDateFormat("dd MMM yyyy HH:mm", Locale("pt", "BR"))
     val title = "Scan ${formatter.format(Date())}"
     val scanId = container.scanRepository.createScan(
@@ -371,8 +381,8 @@ private suspend fun createDraftAndOpenEditor(
         mode = mode,
         sourceUris = uris,
     )
-    val firstPageId = container.scanRepository.getScan(scanId)?.pages?.minByOrNull { it.index }?.id ?: return
-    nav(scanId, firstPageId)
+    val firstPageId = container.scanRepository.getScan(scanId)?.pages?.minByOrNull { it.index }?.id ?: return null
+    return scanId to firstPageId
 }
 
 private fun shareFiles(

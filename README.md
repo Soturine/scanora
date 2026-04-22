@@ -3,11 +3,11 @@
 ![Android](https://img.shields.io/badge/platform-Android-2E7D8C)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-23414B)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-DD8A2E)
-![Version](https://img.shields.io/badge/version-0.1.4-133942)
+![Version](https://img.shields.io/badge/version-0.1.5-133942)
 [![Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml)
 [![Deploy Pages](https://github.com/Soturine/scanora/actions/workflows/pages.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/pages.yml)
 
-Scanora é um app Android de escaneamento de documentos com foco em processamento local, OCR no dispositivo e um fluxo enxuto de captura, revisão e exportação.
+Scanora é um app Android de escaneamento de documentos com foco em processamento local, OCR no dispositivo e um fluxo enxuto entre captura, revisão e exportação.
 
 Repositório: https://github.com/Soturine/scanora  
 Releases: https://github.com/Soturine/scanora/releases  
@@ -15,16 +15,16 @@ Site: https://soturine.github.io/scanora/
 
 ## O que o app já faz
 
-- captura manual com CameraX e fluxo guiado com ML Kit Document Scanner;
+- scanner rápido com ML Kit Document Scanner direto na Home;
+- captura manual com CameraX como fallback editável;
 - ajuste de corte, correção de perspectiva e filtros para documentos;
 - OCR local com cópia rápida do texto;
 - exportação em PDF, JPG e PNG com compartilhamento nativo;
-- histórico local com título, tags, favoritos e busca;
-- tema claro/escuro e arquitetura multimódulo pronta para evolução.
+- histórico local com título, tags, favoritos e busca.
 
 ## Proposta de valor
 
-Scanora foi pensado para quem quer transformar páginas, contratos e recibos em arquivos legíveis sem depender de upload obrigatório. A proposta é sair da câmera até o arquivo final com o mínimo de atrito e com privacidade por padrão.
+Scanora foi pensado para quem quer transformar páginas, contratos e recibos em arquivos legíveis sem depender de upload obrigatório. A proposta é sair do scanner rápido ou do modo manual até o arquivo final com o mínimo de atrito e com privacidade por padrão.
 
 ## Capturas
 
@@ -87,7 +87,7 @@ Política completa em [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 ## Status
 
-`0.1.4` estabiliza o fluxo manual com crop mais confiável, filtros mais claros e uma base menos propensa a travamentos. Ainda faltam capturas reais, o fluxo rápido com o scanner do Google e mais polimento de OCR para uma release 1.0.
+`0.1.5` transforma o scanner rápido em caminho principal, melhora a fidelidade da prévia de filtros e limpa revisão, exportação e OCR para deixar o MVP mais utilizável de verdade. Ainda faltam capturas reais e QA visual em aparelho para uma release 1.0.
 
 ## Contribuir
 

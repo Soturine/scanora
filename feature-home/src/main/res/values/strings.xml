@@ -3,10 +3,12 @@
     <string name="home_title">Início</string>
     <string name="home_app_bar_title">Scanora</string>
     <string name="home_hero_eyebrow">Scanner local</string>
-    <string name="home_hero_title">Escaneie com clareza, revise com calma e exporte sem sair do aparelho.</string>
-    <string name="home_hero_subtitle">Um fluxo direto para capturar contratos, recibos e páginas de estudo com processamento local, OCR e exportação pronta para compartilhar.</string>
-    <string name="home_scan_action">Escanear agora</string>
+    <string name="home_hero_title">Abra o scanner rápido, revise só o que precisar e exporte no aparelho.</string>
+    <string name="home_hero_subtitle">O fluxo principal usa o scanner assistido do Google para reduzir atrito. Quando precisar de controle fino, o modo manual continua disponível com crop, filtros e OCR local.</string>
+    <string name="home_quick_scan_action">Escanear rápido</string>
+    <string name="home_manual_scan_action">Modo manual</string>
     <string name="home_import_action">Importar da galeria</string>
+    <string name="home_quick_scan_unavailable">O scanner rápido não está disponível neste dispositivo.</string>
     <string name="home_chip_local">Processamento local</string>
     <string name="home_chip_ocr">OCR no dispositivo</string>
     <string name="home_chip_export">PDF, JPG e PNG</string>
@@ -17,13 +19,22 @@
     <string name="home_search_placeholder">Procure por título ou tag</string>
     <string name="home_recent_eyebrow">Histórico</string>
     <string name="home_recent_section">Lotes recentes</string>
-    <string name="home_recent_supporting">%1$d item(ns) recentes no histórico local.</string>
     <string name="home_recent_empty_supporting">Os últimos lotes aparecem aqui assim que você revisar ou exportar um documento.</string>
     <string name="home_empty_title">Seu histórico começa aqui</string>
-    <string name="home_empty_message">Capture um documento ou importe imagens para montar o primeiro lote com cara de scanner, não só de foto.</string>
-    <string name="home_recent_subtitle">%1$d página(s) • atualizado em %2$s</string>
+    <string name="home_empty_message">Use o scanner rápido ou monte um lote manual para começar a organizar documentos com cara de scan, não só de foto.</string>
+    <string name="home_recent_updated_at">%1$s • atualizado em %2$s</string>
     <string name="home_history">Meus scans</string>
     <string name="home_settings">Configurações</string>
     <string name="home_badge_favorite">Favorito</string>
     <string name="home_badge_draft">Rascunho</string>
+
+    <plurals name="home_recent_supporting">
+        <item quantity="one">%1$d item recente no histórico local.</item>
+        <item quantity="other">%1$d itens recentes no histórico local.</item>
+    </plurals>
+
+    <plurals name="home_recent_pages">
+        <item quantity="one">%1$d página</item>
+        <item quantity="other">%1$d páginas</item>
+    </plurals>
 </resources>

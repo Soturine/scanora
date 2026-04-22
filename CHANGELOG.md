@@ -4,6 +4,27 @@ Este projeto segue Semantic Versioning e recomenda Conventional Commits no fluxo
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-04-22
+
+### Added
+
+- Scanner rápido com `ML Kit Document Scanner` promovido a CTA principal na Home.
+- Pipeline de prévia em duas etapas no editor, com render inicial rápido e refinamento assíncrono em background.
+
+### Changed
+
+- Sugestão inicial de quadrilátero do fluxo manual foi fortalecida para imagens importadas e capturas mais tortas.
+- Filtros locais foram recalibrados para reduzir página lavada, texto apagado e diferenças pouco úteis entre presets.
+- Tela de revisão foi reorganizada para dar mais foco em lote, páginas e ações principais.
+- Tela de exportação passou a usar hierarquia mais direta, com navegação clara, CTA fixa e compartilhamento melhor integrado.
+- Tela de OCR ficou mais legível e o processamento local passou a usar uma imagem melhor preparada para reconhecimento.
+
+### Fixed
+
+- Risco de recalcular a mesma prévia de filtro em recomposições sucessivas ou trocas rápidas de opção.
+- Sensação de fluxo quebrado entre scanner guiado, revisão e histórico local.
+- Estado antigo de arquivos exportados permanecendo visível depois de trocar formato ou qualidade.
+
 ## [0.1.4] - 2026-04-22
 
 ### Added

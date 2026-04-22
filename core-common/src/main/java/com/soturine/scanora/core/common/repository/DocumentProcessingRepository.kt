@@ -11,6 +11,7 @@ interface DocumentProcessingRepository {
         filterType: DocumentFilterType,
         quad: DocumentQuad?,
         rotationDegrees: Int,
+        maxDimension: Int,
     ): String
 
     suspend fun processPage(

@@ -32,13 +32,13 @@ class DefaultDocumentProcessingRepository(
         val bitmap = loadBitmap(imageUri, maxDimension = 1600) ?: return@withContext fallbackQuad(1600, 2200)
         val width = bitmap.width
         val height = bitmap.height
-        val grayscale = toLumaArray(bitmap)
-        val denoised = smoothLuma(grayscale, width, height)
-        val edgeMagnitude = sobelEdges(denoised, width, height)
+        val luma = smoothLuma(toLumaArray(bitmap), width, height)
+        val edgeMagnitude = sobelEdges(luma, width, height)
         val averageEdge = edgeMagnitude.average().toFloat()
-        val strongThreshold = max(22f, averageEdge * 1.18f)
+        val strongThreshold = max(24f, averageEdge * 1.12f)
         val denseThreshold = strongThreshold * 0.82f
         val bounds = detectBounds(
+            luma = luma,
             edgeMagnitude = edgeMagnitude,
             width = width,
             height = height,
@@ -60,13 +60,14 @@ class DefaultDocumentProcessingRepository(
         filterType: DocumentFilterType,
         quad: DocumentQuad?,
         rotationDegrees: Int,
+        maxDimension: Int,
     ): String = renderPage(
         sourceUri = sourceUri,
         filterType = filterType,
         quad = quad,
         rotationDegrees = rotationDegrees,
-        maxDimension = 1280,
-        quality = 84,
+        maxDimension = maxDimension,
+        quality = 86,
         prefix = "${filterType.storageKey}-preview",
     )
 
@@ -80,8 +81,8 @@ class DefaultDocumentProcessingRepository(
         filterType = filterType,
         quad = quad,
         rotationDegrees = rotationDegrees,
-        maxDimension = 2200,
-        quality = 92,
+        maxDimension = 2800,
+        quality = 93,
         prefix = filterType.storageKey,
     )
 
@@ -125,30 +126,40 @@ class DefaultDocumentProcessingRepository(
     }
 
     private fun enhanceOriginal(bitmap: Bitmap): Bitmap {
-        val normalized = normalizeLighting(bitmap)
-        return sharpen(normalized)
+        val balanced = balanceLighting(bitmap, targetBackground = 214, strength = 0.8f)
+        return sharpen(stretchContrast(balanced, lowerPercentile = 0.025f, upperPercentile = 0.985f))
     }
 
     private fun documentBlackWhite(bitmap: Bitmap): Bitmap {
-        val grayscale = normalizeLighting(toGrayscale(bitmap))
-        val luma = toLumaArray(grayscale)
-        val threshold = otsuThreshold(luma)
-        val pixels = IntArray(luma.size) { index ->
-            if (luma[index] >= threshold) Color.WHITE else Color.BLACK
-        }
-        return Bitmap.createBitmap(pixels, grayscale.width, grayscale.height, Bitmap.Config.ARGB_8888)
+        val grayscale = toGrayscale(bitmap)
+        val prepared = stretchContrast(
+            balanceLighting(grayscale, targetBackground = 222, strength = 0.94f),
+            lowerPercentile = 0.05f,
+            upperPercentile = 0.992f,
+        )
+        return adaptiveThreshold(prepared, offset = 18)
     }
 
     private fun documentGray(bitmap: Bitmap): Bitmap =
-        sharpen(normalizeLighting(toGrayscale(bitmap)))
+        sharpen(
+            stretchContrast(
+                balanceLighting(toGrayscale(bitmap), targetBackground = 218, strength = 0.9f),
+                lowerPercentile = 0.04f,
+                upperPercentile = 0.988f,
+            ),
+        )
 
     private fun colorEnhanced(bitmap: Bitmap): Bitmap {
-        val normalized = normalizeLighting(bitmap)
+        val normalized = stretchContrast(
+            balanceLighting(bitmap, targetBackground = 210, strength = 0.76f),
+            lowerPercentile = 0.03f,
+            upperPercentile = 0.985f,
+        )
         val matrix = ColorMatrix(
             floatArrayOf(
-                1.08f, 0f, 0f, 0f, 8f,
-                0f, 1.08f, 0f, 0f, 8f,
-                0f, 0f, 1.08f, 0f, 8f,
+                1.04f, 0f, 0f, 0f, 4f,
+                0f, 1.04f, 0f, 0f, 4f,
+                0f, 0f, 1.04f, 0f, 4f,
                 0f, 0f, 0f, 1f, 0f,
             ),
         )
@@ -156,41 +167,49 @@ class DefaultDocumentProcessingRepository(
     }
 
     private fun receiptHighContrast(bitmap: Bitmap): Bitmap {
-        val grayscale = normalizeLighting(toGrayscale(bitmap))
-        val luma = toLumaArray(grayscale)
-        val threshold = max(otsuThreshold(luma) - 10, 90)
-        val pixels = IntArray(luma.size) { index ->
-            val value = if (luma[index] >= threshold) 255 else 0
-            Color.rgb(value, value, value)
-        }
-        return sharpen(Bitmap.createBitmap(pixels, grayscale.width, grayscale.height, Bitmap.Config.ARGB_8888))
+        val grayscale = toGrayscale(bitmap)
+        val prepared = stretchContrast(
+            balanceLighting(grayscale, targetBackground = 228, strength = 1f),
+            lowerPercentile = 0.06f,
+            upperPercentile = 0.995f,
+        )
+        return adaptiveThreshold(prepared, offset = 12)
     }
 
-    private fun normalizeLighting(bitmap: Bitmap): Bitmap {
-        val grayscale = toGrayscale(bitmap)
-        val small = Bitmap.createScaledBitmap(
-            grayscale,
-            max(grayscale.width / 12, 1),
-            max(grayscale.height / 12, 1),
-            true,
-        )
-        val blurred = Bitmap.createScaledBitmap(small, grayscale.width, grayscale.height, true)
-
+    private fun balanceLighting(
+        bitmap: Bitmap,
+        targetBackground: Int,
+        strength: Float,
+    ): Bitmap {
+        val background = createBackgroundLuma(bitmap)
         val source = IntArray(bitmap.width * bitmap.height)
-        val background = IntArray(blurred.width * blurred.height)
         bitmap.getPixels(source, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
-        blurred.getPixels(background, 0, blurred.width, 0, 0, blurred.width, blurred.height)
 
         val normalized = IntArray(source.size)
         for (index in source.indices) {
-            val backgroundGray = max(Color.red(background[index]), 1)
+            val backgroundGray = background[index]
+            val shift = ((targetBackground - backgroundGray) * strength).roundToInt()
             val sourceColor = source[index]
-            val correctedRed = ((Color.red(sourceColor) * 255f) / backgroundGray).roundToInt().coerceIn(0, 255)
-            val correctedGreen = ((Color.green(sourceColor) * 255f) / backgroundGray).roundToInt().coerceIn(0, 255)
-            val correctedBlue = ((Color.blue(sourceColor) * 255f) / backgroundGray).roundToInt().coerceIn(0, 255)
+            val correctedRed = (Color.red(sourceColor) + shift).coerceIn(0, 255)
+            val correctedGreen = (Color.green(sourceColor) + shift).coerceIn(0, 255)
+            val correctedBlue = (Color.blue(sourceColor) + shift).coerceIn(0, 255)
             normalized[index] = Color.rgb(correctedRed, correctedGreen, correctedBlue)
         }
         return Bitmap.createBitmap(normalized, bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+    }
+
+    private fun createBackgroundLuma(bitmap: Bitmap): IntArray {
+        val grayscale = toGrayscale(bitmap)
+        val small = Bitmap.createScaledBitmap(
+            grayscale,
+            max(grayscale.width / 14, 1),
+            max(grayscale.height / 14, 1),
+            true,
+        )
+        val blurred = Bitmap.createScaledBitmap(small, grayscale.width, grayscale.height, true)
+        val pixels = IntArray(blurred.width * blurred.height)
+        blurred.getPixels(pixels, 0, blurred.width, 0, 0, blurred.width, blurred.height)
+        return IntArray(pixels.size) { index -> Color.red(pixels[index]) }
     }
 
     private fun toGrayscale(bitmap: Bitmap): Bitmap {
@@ -246,6 +265,55 @@ class DefaultDocumentProcessingRepository(
                     blue.coerceIn(0, 255),
                 )
             }
+        }
+        return Bitmap.createBitmap(output, width, height, Bitmap.Config.ARGB_8888)
+    }
+
+    private fun stretchContrast(
+        bitmap: Bitmap,
+        lowerPercentile: Float,
+        upperPercentile: Float,
+    ): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        val source = IntArray(width * height)
+        bitmap.getPixels(source, 0, width, 0, 0, width, height)
+        val luma = IntArray(source.size) { index ->
+            val color = source[index]
+            (0.299f * Color.red(color) + 0.587f * Color.green(color) + 0.114f * Color.blue(color)).roundToInt()
+        }
+        val lower = percentile(luma, lowerPercentile)
+        val upper = percentile(luma, upperPercentile).coerceAtLeast(lower + 20)
+        if (upper - lower < 20) return bitmap
+
+        val adjusted = IntArray(source.size)
+        for (index in source.indices) {
+            val color = source[index]
+            adjusted[index] = Color.rgb(
+                stretchChannel(Color.red(color), lower, upper),
+                stretchChannel(Color.green(color), lower, upper),
+                stretchChannel(Color.blue(color), lower, upper),
+            )
+        }
+        return Bitmap.createBitmap(adjusted, width, height, Bitmap.Config.ARGB_8888)
+    }
+
+    private fun adaptiveThreshold(
+        grayscaleBitmap: Bitmap,
+        offset: Int,
+    ): Bitmap {
+        val width = grayscaleBitmap.width
+        val height = grayscaleBitmap.height
+        val source = IntArray(width * height)
+        grayscaleBitmap.getPixels(source, 0, width, 0, 0, width, height)
+        val background = createBackgroundLuma(grayscaleBitmap)
+        val luma = IntArray(source.size) { index -> Color.red(source[index]) }
+        val floor = max(otsuThreshold(luma) - 12, 82)
+        val output = IntArray(source.size)
+        for (index in source.indices) {
+            val threshold = max(background[index] - offset, floor)
+            val value = if (luma[index] >= threshold) 255 else 0
+            output[index] = Color.rgb(value, value, value)
         }
         return Bitmap.createBitmap(output, width, height, Bitmap.Config.ARGB_8888)
     }
@@ -317,6 +385,7 @@ class DefaultDocumentProcessingRepository(
     }
 
     private fun detectBounds(
+        luma: IntArray,
         edgeMagnitude: FloatArray,
         width: Int,
         height: Int,
@@ -325,25 +394,16 @@ class DefaultDocumentProcessingRepository(
     ): Rect? {
         val projected = detectProjectedBounds(edgeMagnitude, width, height, denseThreshold)
         val raw = detectStrongEdgeExtents(edgeMagnitude, width, height, strongThreshold)
-        val merged = when {
-            projected != null && raw != null -> mergeBounds(projected, raw)
-            projected != null -> projected
-            raw != null -> raw
-            else -> null
-        } ?: return null
+        val bright = detectBrightDocumentBounds(luma, width, height)
+        val merged = mergeCandidateBounds(
+            projected = projected,
+            raw = raw,
+            bright = bright,
+            width = width,
+            height = height,
+        ) ?: return null
 
-        val minWidth = (width * 0.34f).roundToInt()
-        val minHeight = (height * 0.34f).roundToInt()
-        if ((merged.width()) < minWidth || (merged.height()) < minHeight) return null
-
-        val insetX = (merged.width() * 0.035f).roundToInt()
-        val insetY = (merged.height() * 0.035f).roundToInt()
-        return Rect(
-            max(merged.left - insetX, 0),
-            max(merged.top - insetY, 0),
-            min(merged.right + insetX, width - 1),
-            min(merged.bottom + insetY, height - 1),
-        )
+        return stabilizeBounds(merged, width, height)
     }
 
     private fun detectProjectedBounds(
@@ -421,16 +481,147 @@ class DefaultDocumentProcessingRepository(
         return Rect(left, top, right, bottom)
     }
 
-    private fun mergeBounds(
-        projected: Rect,
-        raw: Rect,
-    ): Rect =
-        Rect(
-            ((projected.left + raw.left) / 2f).roundToInt(),
-            ((projected.top + raw.top) / 2f).roundToInt(),
-            ((projected.right + raw.right) / 2f).roundToInt(),
-            ((projected.bottom + raw.bottom) / 2f).roundToInt(),
+    private fun detectBrightDocumentBounds(
+        luma: IntArray,
+        width: Int,
+        height: Int,
+    ): Rect? {
+        val rowAverages = FloatArray(height)
+        val columnAverages = FloatArray(width)
+        for (y in 0 until height) {
+            var rowTotal = 0f
+            for (x in 0 until width) {
+                val value = luma[y * width + x].toFloat()
+                rowTotal += value
+                columnAverages[x] += value
+            }
+            rowAverages[y] = rowTotal / width
+        }
+        for (index in columnAverages.indices) {
+            columnAverages[index] /= height
+        }
+
+        val smoothedRows = smoothSeries(rowAverages, radius = max(height / 80, 3))
+        val smoothedColumns = smoothSeries(columnAverages, radius = max(width / 80, 3))
+        val globalAverage = smoothedRows.average().toFloat()
+        val centralAverage = smoothedRows
+            .slice(height / 5 until (height - height / 5).coerceAtLeast(height / 5 + 1))
+            .average()
+            .toFloat()
+        val threshold = min(max(globalAverage + 6f, centralAverage - 16f), 236f)
+
+        val top = findSeriesBoundary(smoothedRows, threshold, fromStart = true)
+        val bottom = findSeriesBoundary(smoothedRows, threshold, fromStart = false)
+        val left = findSeriesBoundary(smoothedColumns, threshold, fromStart = true)
+        val right = findSeriesBoundary(smoothedColumns, threshold, fromStart = false)
+
+        if (top == -1 || bottom == -1 || left == -1 || right == -1) return null
+        if (left >= right || top >= bottom) return null
+        return Rect(left, top, right, bottom)
+    }
+
+    private fun smoothSeries(
+        values: FloatArray,
+        radius: Int,
+    ): FloatArray {
+        if (values.isEmpty()) return values
+        val output = FloatArray(values.size)
+        for (index in values.indices) {
+            var total = 0f
+            var count = 0
+            val start = max(0, index - radius)
+            val end = min(values.lastIndex, index + radius)
+            for (cursor in start..end) {
+                total += values[cursor]
+                count++
+            }
+            output[index] = total / count.coerceAtLeast(1)
+        }
+        return output
+    }
+
+    private fun findSeriesBoundary(
+        values: FloatArray,
+        threshold: Float,
+        fromStart: Boolean,
+    ): Int {
+        if (values.isEmpty()) return -1
+        val margin = max((values.size * 0.03f).roundToInt(), 2)
+        val runLength = max(values.size / 50, 3)
+        val range = if (fromStart) {
+            margin until (values.size - margin)
+        } else {
+            (values.size - margin - 1) downTo margin
+        }
+        var consecutive = 0
+        var boundary = -1
+        for (index in range) {
+            if (values[index] >= threshold) {
+                consecutive++
+                boundary = index
+                if (consecutive >= runLength) {
+                    return if (fromStart) index - runLength + 1 else index + runLength - 1
+                }
+            } else {
+                consecutive = 0
+                boundary = -1
+            }
+        }
+        return boundary
+    }
+
+    private fun mergeCandidateBounds(
+        projected: Rect?,
+        raw: Rect?,
+        bright: Rect?,
+        width: Int,
+        height: Int,
+    ): Rect? {
+        val candidates = buildList {
+            projected?.let { add(it to 1.25f) }
+            raw?.let { add(it to 1f) }
+            bright?.let { add(it to 1.4f) }
+        }
+        if (candidates.isEmpty()) return null
+
+        var left = 0f
+        var top = 0f
+        var right = 0f
+        var bottom = 0f
+        var totalWeight = 0f
+        candidates.forEach { (rect, weight) ->
+            left += rect.left * weight
+            top += rect.top * weight
+            right += rect.right * weight
+            bottom += rect.bottom * weight
+            totalWeight += weight
+        }
+        val merged = Rect(
+            (left / totalWeight).roundToInt(),
+            (top / totalWeight).roundToInt(),
+            (right / totalWeight).roundToInt(),
+            (bottom / totalWeight).roundToInt(),
         )
+        val minWidth = (width * 0.42f).roundToInt()
+        val minHeight = (height * 0.42f).roundToInt()
+        if (merged.width() < minWidth || merged.height() < minHeight) return null
+        return merged
+    }
+
+    private fun stabilizeBounds(
+        bounds: Rect,
+        width: Int,
+        height: Int,
+    ): Rect {
+        val expandX = (bounds.width() * 0.03f).roundToInt()
+        val expandY = (bounds.height() * 0.03f).roundToInt()
+        return Rect(
+            max(bounds.left - expandX, 0),
+            max(bounds.top - expandY, 0),
+            min(bounds.right + expandX, width - 1),
+            min(bounds.bottom + expandY, height - 1),
+        )
+    }
 
     private fun smoothLuma(
         luma: IntArray,
@@ -511,6 +702,27 @@ class DefaultDocumentProcessingRepository(
         return threshold
     }
 
+    private fun percentile(
+        values: IntArray,
+        fraction: Float,
+    ): Int {
+        val histogram = IntArray(256)
+        values.forEach { histogram[it.coerceIn(0, 255)]++ }
+        val target = (values.size * fraction.coerceIn(0f, 1f)).roundToInt()
+        var seen = 0
+        histogram.forEachIndexed { index, count ->
+            seen += count
+            if (seen >= target) return index
+        }
+        return 255
+    }
+
+    private fun stretchChannel(
+        value: Int,
+        lower: Int,
+        upper: Int,
+    ): Int = (((value - lower) * 255f) / (upper - lower)).roundToInt().coerceIn(0, 255)
+
     private fun removeBlackBorders(bitmap: Bitmap): Bitmap {
         val pixels = IntArray(bitmap.width * bitmap.height)
         bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
@@ -540,8 +752,8 @@ class DefaultDocumentProcessingRepository(
         while (left < right && columnAverage(left) < 18) left++
         while (right > left && columnAverage(right) < 18) right--
 
-        val cropWidth = (right - left).coerceAtLeast(1)
-        val cropHeight = (bottom - top).coerceAtLeast(1)
+        val cropWidth = (right - left + 1).coerceAtLeast(1)
+        val cropHeight = (bottom - top + 1).coerceAtLeast(1)
         return Bitmap.createBitmap(bitmap, left, top, cropWidth, cropHeight)
     }
 
@@ -590,10 +802,10 @@ class DefaultDocumentProcessingRepository(
         height: Int,
     ): DocumentQuad =
         DocumentQuad(
-            topLeft = PointValue(0.06f, 0.06f),
-            topRight = PointValue(0.94f, 0.06f),
-            bottomRight = PointValue(0.94f, 0.94f),
-            bottomLeft = PointValue(0.06f, 0.94f),
+            topLeft = PointValue(0.08f, 0.08f),
+            topRight = PointValue(0.92f, 0.08f),
+            bottomRight = PointValue(0.92f, 0.92f),
+            bottomLeft = PointValue(0.08f, 0.92f),
         )
 
     private fun scaleQuadToBitmap(

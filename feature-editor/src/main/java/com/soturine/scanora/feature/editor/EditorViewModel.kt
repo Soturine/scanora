@@ -4,12 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.soturine.scanora.core.common.model.DocumentFilterType
 import com.soturine.scanora.core.common.model.DocumentQuad
+import com.soturine.scanora.core.common.model.PointValue
 import com.soturine.scanora.core.common.model.ScanPage
 import com.soturine.scanora.core.common.repository.DocumentProcessingRepository
 import com.soturine.scanora.core.common.repository.ScanRepository
 import com.soturine.scanora.core.common.usecase.ValidateDocumentNameUseCase
+import java.util.Locale
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +31,7 @@ class EditorViewModel(
     private val selectedPageId = MutableStateFlow(initialPageId)
     private val isProcessing = MutableStateFlow(false)
     private val isPreviewLoading = MutableStateFlow(false)
+    private val isPreviewRefining = MutableStateFlow(false)
     private val previewImageUri = MutableStateFlow<String?>(null)
     private val errorMessage = MutableStateFlow<String?>(null)
 
@@ -40,6 +44,7 @@ class EditorViewModel(
         val pageId: String?,
         val isProcessing: Boolean,
         val isPreviewLoading: Boolean,
+        val isPreviewRefining: Boolean,
     )
 
     private val baseState = combine(
@@ -47,12 +52,14 @@ class EditorViewModel(
         selectedPageId,
         isProcessing,
         isPreviewLoading,
-    ) { scan, pageId, processing, previewLoading ->
+        isPreviewRefining,
+    ) { scan, pageId, processing, previewLoading, previewRefining ->
         EditorBaseState(
             scan = scan,
             pageId = pageId,
             isProcessing = processing,
             isPreviewLoading = previewLoading,
+            isPreviewRefining = previewRefining,
         )
     }
 
@@ -70,6 +77,7 @@ class EditorViewModel(
             currentPage = resolvedPage,
             isProcessing = base.isProcessing,
             isPreviewLoading = base.isPreviewLoading,
+            isPreviewRefining = base.isPreviewRefining,
             previewImageUri = previewUri ?: resolvedPage?.displayUri,
             errorMessage = message,
         )
@@ -80,7 +88,10 @@ class EditorViewModel(
     )
 
     fun selectPage(pageId: String) {
+        previewJob?.cancel()
         selectedPageId.value = pageId
+        isPreviewLoading.value = false
+        isPreviewRefining.value = false
         previewImageUri.value = null
         previewCache.clear()
     }
@@ -110,6 +121,9 @@ class EditorViewModel(
 
     fun updateQuad(quad: DocumentQuad) {
         val page = uiState.value.currentPage ?: return
+        previewJob?.cancel()
+        isPreviewLoading.value = false
+        isPreviewRefining.value = false
         previewImageUri.value = null
         previewCache.clear()
         viewModelScope.launch {
@@ -117,51 +131,79 @@ class EditorViewModel(
         }
     }
 
-    fun prepareFilterPreview(filterType: DocumentFilterType) {
+    fun prepareFilterPreview(
+        filterType: DocumentFilterType,
+        previewLongSide: Int,
+    ) {
         val page = uiState.value.currentPage ?: return
         previewJob?.cancel()
 
+        val targetDimension = previewLongSide.coerceIn(1400, 1800)
+        val quickDimension = (targetDimension * 0.68f).toInt().coerceIn(960, 1280)
         val currentDisplayUri = page.displayUri
+
         if (filterType == page.filterType && page.processedUri != null) {
             previewImageUri.value = currentDisplayUri
             isPreviewLoading.value = false
+            isPreviewRefining.value = false
             return
         }
 
-        val cacheKey = buildPreviewCacheKey(page, filterType)
-        previewCache[cacheKey]?.let { cachedPreview ->
+        val refinedCacheKey = buildPreviewCacheKey(page, filterType, targetDimension)
+        previewCache[refinedCacheKey]?.let { cachedPreview ->
             previewImageUri.value = cachedPreview
             isPreviewLoading.value = false
+            isPreviewRefining.value = false
             return
+        }
+
+        val quickCacheKey = buildPreviewCacheKey(page, filterType, quickDimension)
+        previewCache[quickCacheKey]?.let { cachedPreview ->
+            previewImageUri.value = cachedPreview
+            isPreviewLoading.value = false
+            isPreviewRefining.value = quickCacheKey != refinedCacheKey
+        } ?: run {
+            isPreviewLoading.value = true
+            isPreviewRefining.value = false
         }
 
         previewJob = viewModelScope.launch {
-            isPreviewLoading.value = true
             errorMessage.value = null
-            runCatching {
-                val effectiveQuad = page.quad ?: processingRepository.estimateDocumentQuad(page.sourceUri)
-                if (page.quad == null) {
-                    scanRepository.updatePage(
-                        scanId = scanId,
-                        page = page.copy(quad = effectiveQuad),
+            try {
+                delay(150)
+                val effectiveQuad = ensureQuad(page)
+                if (previewCache[quickCacheKey] == null) {
+                    val quickPreview = processingRepository.renderPreview(
+                        sourceUri = page.sourceUri,
+                        filterType = filterType,
+                        quad = effectiveQuad,
+                        rotationDegrees = page.rotationDegrees,
+                        maxDimension = quickDimension,
                     )
+                    previewCache[quickCacheKey] = quickPreview
+                    previewImageUri.value = quickPreview
+                    isPreviewLoading.value = false
                 }
-                processingRepository.renderPreview(
+
+                isPreviewRefining.value = quickCacheKey != refinedCacheKey
+                val refinedPreview = previewCache[refinedCacheKey] ?: processingRepository.renderPreview(
                     sourceUri = page.sourceUri,
                     filterType = filterType,
                     quad = effectiveQuad,
                     rotationDegrees = page.rotationDegrees,
+                    maxDimension = targetDimension,
                 )
-            }.onSuccess { previewUri ->
-                previewCache[cacheKey] = previewUri
-                previewImageUri.value = previewUri
-            }.onFailure { throwable ->
+                previewCache[refinedCacheKey] = refinedPreview
+                previewImageUri.value = refinedPreview
+            } catch (throwable: Throwable) {
                 if (throwable !is CancellationException) {
                     previewImageUri.value = currentDisplayUri
                     errorMessage.value = throwable.message ?: "Não foi possível atualizar a prévia do filtro."
                 }
+            } finally {
+                isPreviewLoading.value = false
+                isPreviewRefining.value = false
             }
-            isPreviewLoading.value = false
         }
     }
 
@@ -170,9 +212,11 @@ class EditorViewModel(
         previewJob?.cancel()
         viewModelScope.launch {
             isProcessing.value = true
+            isPreviewLoading.value = false
+            isPreviewRefining.value = false
             errorMessage.value = null
             runCatching {
-                val effectiveQuad = page.quad ?: processingRepository.estimateDocumentQuad(page.sourceUri)
+                val effectiveQuad = ensureQuad(page)
                 val processedUri = processingRepository.processPage(
                     sourceUri = page.sourceUri,
                     filterType = filterType,
@@ -205,10 +249,12 @@ class EditorViewModel(
         previewJob?.cancel()
         viewModelScope.launch {
             isProcessing.value = true
+            isPreviewLoading.value = false
+            isPreviewRefining.value = false
             errorMessage.value = null
             runCatching {
                 val newRotation = (page.rotationDegrees + 90) % 360
-                val effectiveQuad = page.quad ?: processingRepository.estimateDocumentQuad(page.sourceUri)
+                val effectiveQuad = ensureQuad(page)
                 val processedUri = processingRepository.processPage(
                     sourceUri = page.sourceUri,
                     filterType = page.filterType,
@@ -285,16 +331,45 @@ class EditorViewModel(
         errorMessage.update { null }
     }
 
+    private suspend fun ensureQuad(page: ScanPage): DocumentQuad {
+        val existing = page.quad
+        if (existing != null) return existing
+        val suggestedQuad = processingRepository.estimateDocumentQuad(page.sourceUri)
+        scanRepository.updatePage(
+            scanId = scanId,
+            page = page.copy(quad = suggestedQuad),
+        )
+        return suggestedQuad
+    }
+
     private fun buildPreviewCacheKey(
         page: ScanPage,
         filterType: DocumentFilterType,
+        maxDimension: Int,
     ): String = buildString {
-        append(page.id)
+        append(page.sourceUri)
         append('|')
         append(filterType.storageKey)
         append('|')
         append(page.rotationDegrees)
         append('|')
-        append(page.quad?.hashCode() ?: "no-quad")
+        append(maxDimension)
+        append('|')
+        append(page.quad?.cacheKey() ?: "no-quad")
     }
+
+    private fun DocumentQuad.cacheKey(): String = buildString {
+        append(topLeft.compact())
+        append('|')
+        append(topRight.compact())
+        append('|')
+        append(bottomRight.compact())
+        append('|')
+        append(bottomLeft.compact())
+    }
+
+    private fun PointValue.compact(): String =
+        "${x.formatForCache()},${y.formatForCache()}"
+
+    private fun Float.formatForCache(): String = String.format(Locale.US, "%.4f", this)
 }

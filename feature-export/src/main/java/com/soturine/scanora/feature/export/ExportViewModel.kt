@@ -65,10 +65,12 @@ class ExportViewModel(
 
     fun selectFormat(format: ExportFormat) {
         selectedFormat.value = format
+        exportedFiles.value = emptyList()
     }
 
     fun selectQuality(quality: PdfQuality) {
         selectedQuality.value = quality
+        exportedFiles.value = emptyList()
     }
 
     fun export() {
@@ -76,6 +78,7 @@ class ExportViewModel(
         viewModelScope.launch {
             isExporting.value = true
             errorMessage.value = null
+            exportedFiles.value = emptyList()
             runCatching {
                 val files = if (uiState.value.selectedFormat == ExportFormat.PDF) {
                     listOf(

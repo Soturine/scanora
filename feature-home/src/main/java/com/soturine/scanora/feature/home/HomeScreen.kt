@@ -1,7 +1,11 @@
 package com.soturine.scanora.feature.home
 
+import android.content.Context
+import android.content.ContextWrapper
 import android.net.Uri
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -24,28 +28,39 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import com.soturine.scanora.core.common.model.ScanMode
 import com.soturine.scanora.core.common.usecase.FormatScanDateUseCase
 import com.soturine.scanora.core.ui.component.EmptyStateCard
 import com.soturine.scanora.core.ui.component.ModeCard
 import com.soturine.scanora.core.ui.component.PageThumbnailCard
 import com.soturine.scanora.core.ui.component.SectionHeader
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     state: HomeUiState,
-    onOpenCamera: (ScanMode) -> Unit,
+    onStartQuickScan: (ScanMode, List<String>) -> Unit,
+    onOpenManualCamera: (ScanMode) -> Unit,
     onImportImages: (ScanMode, List<String>) -> Unit,
     onModeSelected: (ScanMode) -> Unit,
     onQueryChange: (String) -> Unit,
@@ -54,7 +69,12 @@ fun HomeScreen(
     onOpenScan: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    val activity = context.findActivity()
+    val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     val dateFormatter = remember { FormatScanDateUseCase() }
+    val quickScanUnavailableMessage = stringResource(id = R.string.home_quick_scan_unavailable)
     val heroChips = listOf(
         stringResource(id = R.string.home_chip_local),
         stringResource(id = R.string.home_chip_ocr),
@@ -65,6 +85,15 @@ fun HomeScreen(
     ) { uris: List<Uri> ->
         if (uris.isNotEmpty()) {
             onImportImages(state.selectedMode, uris.map(Uri::toString))
+        }
+    }
+    val guidedScanLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult(),
+    ) { result ->
+        val scanResult = GmsDocumentScanningResult.fromActivityResultIntent(result.data)
+        val pages = scanResult?.pages.orEmpty().mapNotNull { it.imageUri?.toString() }
+        if (pages.isNotEmpty()) {
+            onStartQuickScan(state.selectedMode, pages)
         }
     }
 
@@ -89,6 +118,7 @@ fun HomeScreen(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -131,11 +161,45 @@ fun HomeScreen(
                         }
                         Button(
                             modifier = Modifier.fillMaxWidth(),
-                            onClick = { onOpenCamera(state.selectedMode) },
+                            onClick = {
+                                if (activity == null) {
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(quickScanUnavailableMessage)
+                                    }
+                                    return@Button
+                                }
+                                val options = GmsDocumentScannerOptions.Builder()
+                                    .setGalleryImportAllowed(true)
+                                    .setPageLimit(12)
+                                    .setResultFormats(
+                                        GmsDocumentScannerOptions.RESULT_FORMAT_JPEG,
+                                        GmsDocumentScannerOptions.RESULT_FORMAT_PDF,
+                                    )
+                                    .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
+                                    .build()
+                                GmsDocumentScanning.getClient(options)
+                                    .getStartScanIntent(activity)
+                                    .addOnSuccessListener { intentSender ->
+                                        guidedScanLauncher.launch(
+                                            IntentSenderRequest.Builder(intentSender).build(),
+                                        )
+                                    }
+                                    .addOnFailureListener {
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar(quickScanUnavailableMessage)
+                                        }
+                                    }
+                            },
                         ) {
-                            Text(text = stringResource(id = R.string.home_scan_action))
+                            Text(text = stringResource(id = R.string.home_quick_scan_action))
                         }
                         FilledTonalButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = { onOpenManualCamera(state.selectedMode) },
+                        ) {
+                            Text(text = stringResource(id = R.string.home_manual_scan_action))
+                        }
+                        OutlinedButton(
                             modifier = Modifier.fillMaxWidth(),
                             onClick = {
                                 importLauncher.launch(
@@ -176,7 +240,11 @@ fun HomeScreen(
                     supportingText = if (state.recentScans.isEmpty()) {
                         stringResource(id = R.string.home_recent_empty_supporting)
                     } else {
-                        stringResource(id = R.string.home_recent_supporting, state.recentScans.size)
+                        pluralStringResource(
+                            id = R.plurals.home_recent_supporting,
+                            count = state.recentScans.size,
+                            state.recentScans.size,
+                        )
                     },
                 )
             }
@@ -203,8 +271,12 @@ fun HomeScreen(
                     PageThumbnailCard(
                         title = scan.title,
                         subtitle = stringResource(
-                            id = R.string.home_recent_subtitle,
-                            scan.pageCount,
+                            id = R.string.home_recent_updated_at,
+                            pluralStringResource(
+                                id = R.plurals.home_recent_pages,
+                                count = scan.pageCount,
+                                scan.pageCount,
+                            ),
                             dateFormatter(scan.updatedAt),
                         ),
                         imageUri = scan.coverPage?.displayUri,
@@ -220,4 +292,10 @@ fun HomeScreen(
             }
         }
     }
+}
+
+private fun Context.findActivity(): ComponentActivity? = when (this) {
+    is ComponentActivity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ocr_title">OCR</string>
+    <string name="ocr_back">Voltar</string>
     <string name="ocr_eyebrow">Leitura local</string>
     <string name="ocr_missing_title">Página indisponível</string>
     <string name="ocr_missing_message">Abra uma página válida para reconhecer texto.</string>
     <string name="ocr_processing">Processando texto no aparelho…</string>
+    <string name="ocr_processing_detail">O texto reconhecido aparece aqui assim que a leitura local terminar.</string>
     <string name="ocr_result_title">Texto reconhecido</string>
     <string name="ocr_supporting">Resultado baseado na página tratada com o filtro %1$s.</string>
+    <string name="ocr_empty_title">Ainda não encontramos texto útil</string>
     <string name="ocr_empty_text">Nenhum texto foi encontrado nessa página. Vale tentar outro filtro antes de rodar o OCR novamente.</string>
     <string name="ocr_copy">Copiar texto</string>
     <string name="ocr_retry">Reconhecer novamente</string>

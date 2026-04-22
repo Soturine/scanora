@@ -2,19 +2,29 @@ package com.soturine.scanora.feature.export
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -24,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.soturine.scanora.core.common.model.ExportFormat
+import com.soturine.scanora.core.common.model.ExportedFile
 import com.soturine.scanora.core.common.model.PdfQuality
 import com.soturine.scanora.core.ui.component.EmptyStateCard
 import com.soturine.scanora.core.ui.component.OptionCard
@@ -36,7 +47,8 @@ fun ExportScreen(
     onSelectFormat: (ExportFormat) -> Unit,
     onSelectQuality: (PdfQuality) -> Unit,
     onExport: () -> Unit,
-    onShare: (List<com.soturine.scanora.core.common.model.ExportedFile>) -> Unit,
+    onShare: (List<ExportedFile>) -> Unit,
+    onBack: () -> Unit,
     onClearMessage: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -54,7 +66,52 @@ fun ExportScreen(
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(id = R.string.export_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(id = R.string.export_back),
+                        )
+                    }
+                },
             )
+        },
+        bottomBar = {
+            if (state.scan != null) {
+                Surface(shadowElevation = 8.dp) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        if (state.isExporting) {
+                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                            Text(
+                                text = stringResource(id = R.string.export_processing_message),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Button(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = onExport,
+                            enabled = !state.isExporting,
+                        ) {
+                            Text(text = stringResource(id = R.string.export_action))
+                        }
+                        if (state.exportedFiles.isNotEmpty()) {
+                            OutlinedButton(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = { onShare(state.exportedFiles) },
+                            ) {
+                                Text(text = stringResource(id = R.string.export_share_action))
+                            }
+                        }
+                    }
+                }
+            }
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { innerPadding ->
@@ -68,49 +125,46 @@ fun ExportScreen(
                     .padding(24.dp),
             )
         } else {
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(20.dp),
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    ),
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(18.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        ),
                     ) {
-                        SectionHeader(
-                            eyebrow = stringResource(id = R.string.export_eyebrow),
-                            title = scan.title,
-                            supportingText = stringResource(id = R.string.export_summary, scan.pageCount),
-                        )
-                        Text(
-                            text = stringResource(id = R.string.export_local_notice),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            SectionHeader(
+                                eyebrow = stringResource(id = R.string.export_eyebrow),
+                                title = scan.title,
+                                supportingText = stringResource(id = R.string.export_summary, scan.pageCount),
+                            )
+                            Text(
+                                text = stringResource(id = R.string.export_local_notice),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
-                if (state.isExporting) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                    Text(
-                        text = stringResource(id = R.string.export_processing_message),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                item {
+                    SectionHeader(
+                        eyebrow = stringResource(id = R.string.export_format_eyebrow),
+                        title = stringResource(id = R.string.export_format_section),
+                        supportingText = stringResource(id = R.string.export_format_supporting),
                     )
                 }
-                SectionHeader(
-                    eyebrow = stringResource(id = R.string.export_format_eyebrow),
-                    title = stringResource(id = R.string.export_format_section),
-                )
-                ExportFormat.entries.forEach { format ->
+                items(ExportFormat.entries, key = { it.storageKey }) { format ->
                     OptionCard(
                         title = format.title,
                         subtitle = format.description(),
@@ -118,52 +172,56 @@ fun ExportScreen(
                         onClick = { onSelectFormat(format) },
                     )
                 }
-
-                SectionHeader(
-                    eyebrow = stringResource(id = R.string.export_quality_eyebrow),
-                    title = stringResource(id = R.string.export_quality_section),
-                )
-                PdfQuality.entries.forEach { quality ->
-                    OptionCard(
-                        title = quality.title,
-                        subtitle = quality.description(),
-                        selected = state.selectedQuality == quality,
-                        onClick = { onSelectQuality(quality) },
-                    )
+                if (state.selectedFormat == ExportFormat.PDF) {
+                    item {
+                        SectionHeader(
+                            eyebrow = stringResource(id = R.string.export_quality_eyebrow),
+                            title = stringResource(id = R.string.export_quality_section),
+                            supportingText = stringResource(id = R.string.export_quality_supporting),
+                        )
+                    }
+                    items(PdfQuality.entries, key = { it.name }) { quality ->
+                        OptionCard(
+                            title = quality.title,
+                            subtitle = quality.description(),
+                            selected = state.selectedQuality == quality,
+                            onClick = { onSelectQuality(quality) },
+                        )
+                    }
                 }
-
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = onExport,
-                    enabled = !state.isExporting,
-                ) {
-                    Text(text = stringResource(id = R.string.export_action))
-                }
-
                 if (state.exportedFiles.isNotEmpty()) {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                        ),
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(18.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Text(
-                                text = stringResource(
-                                    id = R.string.export_success_message,
-                                    state.exportedFiles.size,
-                                ),
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            OutlinedButton(
-                                modifier = Modifier.fillMaxWidth(),
-                                onClick = { onShare(state.exportedFiles) },
+                    item {
+                        Card {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(18.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
-                                Text(text = stringResource(id = R.string.export_share_action))
+                                SectionHeader(
+                                    eyebrow = stringResource(id = R.string.export_ready_eyebrow),
+                                    title = stringResource(id = R.string.export_ready_title),
+                                    supportingText = stringResource(
+                                        id = R.string.export_success_message,
+                                        state.exportedFiles.size,
+                                    ),
+                                )
+                                state.exportedFiles.forEach { file ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                    ) {
+                                        Text(
+                                            text = file.displayName,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                        )
+                                        Text(
+                                            text = file.sizeLabel(),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -174,13 +232,22 @@ fun ExportScreen(
 }
 
 private fun ExportFormat.description(): String = when (this) {
-    ExportFormat.PDF -> "Ideal para compartilhar um lote inteiro como documento."
-    ExportFormat.JPG -> "Melhor para páginas individuais com tamanho reduzido."
-    ExportFormat.PNG -> "Mantém mais detalhes em páginas individuais."
+    ExportFormat.PDF -> "Ideal para enviar ou arquivar um lote inteiro em um único documento."
+    ExportFormat.JPG -> "Exporta cada página como imagem leve e fácil de compartilhar."
+    ExportFormat.PNG -> "Mantém mais detalhe por página quando o lote precisa de imagem individual."
 }
 
 private fun PdfQuality.description(): String = when (this) {
-    PdfQuality.COMPACT -> "Arquivos menores para envio rápido."
-    PdfQuality.BALANCED -> "Equilíbrio entre qualidade e tamanho."
-    PdfQuality.HIGH -> "Mais definição para impressão e arquivo."
+    PdfQuality.COMPACT -> "Menos peso para envio rápido."
+    PdfQuality.BALANCED -> "Equilíbrio entre clareza e tamanho."
+    PdfQuality.HIGH -> "Mais definição para leitura fina e impressão."
+}
+
+private fun ExportedFile.sizeLabel(): String {
+    val sizeInKb = sizeBytes / 1024f
+    return if (sizeInKb >= 1024f) {
+        String.format("%.1f MB", sizeInKb / 1024f)
+    } else {
+        String.format("%.0f KB", sizeInKb.coerceAtLeast(1f))
+    }
 }

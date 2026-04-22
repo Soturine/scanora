@@ -37,6 +37,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -45,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -54,7 +56,9 @@ import com.soturine.scanora.core.common.model.PointValue
 import com.soturine.scanora.core.ui.component.AsyncUriImage
 import com.soturine.scanora.core.ui.component.EmptyStateCard
 import com.soturine.scanora.core.ui.component.OptionCard
+import com.soturine.scanora.core.ui.component.PageThumbnailCard
 import com.soturine.scanora.core.ui.component.SectionHeader
+import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -188,7 +192,7 @@ fun CropScreen(
 fun FilterScreen(
     state: EditorUiState,
     onApplyFilter: (DocumentFilterType) -> Unit,
-    onRequestPreview: (DocumentFilterType) -> Unit,
+    onRequestPreview: (DocumentFilterType, Int) -> Unit,
     onRotate: () -> Unit,
     onOpenReview: () -> Unit,
     onBack: () -> Unit,
@@ -200,6 +204,7 @@ fun FilterScreen(
     var selectedFilter by remember(page?.id, page?.filterType) {
         mutableStateOf(page?.filterType ?: DocumentFilterType.ORIGINAL_CORRECTED)
     }
+    var previewLongSide by remember(page?.id) { mutableIntStateOf(1500) }
 
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
@@ -208,9 +213,9 @@ fun FilterScreen(
         }
     }
 
-    LaunchedEffect(page?.id, selectedFilter) {
+    LaunchedEffect(page?.id, selectedFilter, previewLongSide) {
         if (page != null) {
-            onRequestPreview(selectedFilter)
+            onRequestPreview(selectedFilter, previewLongSide)
         }
     }
 
@@ -240,7 +245,7 @@ fun FilterScreen(
                             .padding(horizontal = 20.dp, vertical = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        if (state.isProcessing || state.isPreviewLoading) {
+                        if (state.isProcessing) {
                             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                         }
                         Row(
@@ -309,26 +314,41 @@ fun FilterScreen(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                         ),
                     ) {
-                        Box(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
-                            AsyncUriImage(
-                                imageUri = state.previewImageUri ?: page.displayUri,
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(360.dp),
-                                contentScale = ContentScale.Fit,
-                                maxDimension = 1400,
-                            )
-                            if (state.isPreviewLoading || state.isProcessing) {
-                                PreviewProgressOverlay(
-                                    text = if (state.isProcessing) {
-                                        stringResource(id = R.string.editor_filter_applying)
-                                    } else {
-                                        stringResource(id = R.string.editor_filter_preview_loading)
+                                    .height(372.dp)
+                                    .onSizeChanged { size ->
+                                        previewLongSide = max(size.width, size.height).coerceIn(1400, 1800)
                                     },
+                            ) {
+                                AsyncUriImage(
+                                    imageUri = state.previewImageUri ?: page.displayUri,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Fit,
+                                    maxDimension = previewLongSide,
+                                )
+                                if (state.isPreviewLoading || state.isProcessing) {
+                                    PreviewProgressOverlay(
+                                        text = if (state.isProcessing) {
+                                            stringResource(id = R.string.editor_filter_applying)
+                                        } else {
+                                            stringResource(id = R.string.editor_filter_preview_loading)
+                                        },
+                                    )
+                                }
+                            }
+                            if (state.isPreviewRefining && !state.isProcessing) {
+                                Text(
+                                    text = stringResource(id = R.string.editor_filter_preview_refining),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                         }
@@ -368,6 +388,7 @@ fun ReviewScreen(
     onOpenFilters: () -> Unit,
     onOpenExport: () -> Unit,
     onOpenOcr: (String) -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scan = state.scan
@@ -392,8 +413,7 @@ fun ReviewScreen(
             .filter(String::isNotBlank)
             .distinct()
     }
-    val hasTitleChanges = title.trim() != scan.title
-    val hasTagChanges = normalizedTagDraft != scan.tags
+    val hasMetadataChanges = title.trim() != scan.title || normalizedTagDraft != scan.tags
 
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
@@ -407,234 +427,196 @@ fun ReviewScreen(
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(id = R.string.editor_review_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(id = R.string.editor_back),
+                        )
+                    }
+                },
             )
+        },
+        bottomBar = {
+            Surface(shadowElevation = 8.dp) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        FilledTonalButton(
+                            modifier = Modifier.weight(1f),
+                            onClick = onOpenCrop,
+                            enabled = state.currentPage != null,
+                        ) {
+                            Text(text = stringResource(id = R.string.editor_open_crop))
+                        }
+                        FilledTonalButton(
+                            modifier = Modifier.weight(1f),
+                            onClick = onOpenFilters,
+                            enabled = state.currentPage != null,
+                        ) {
+                            Text(text = stringResource(id = R.string.editor_open_filters))
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        OutlinedButton(
+                            modifier = Modifier.weight(1f),
+                            onClick = onDeleteCurrentPage,
+                            enabled = state.currentPage != null,
+                        ) {
+                            Text(text = stringResource(id = R.string.editor_delete_page))
+                        }
+                        Button(
+                            modifier = Modifier.weight(1f),
+                            onClick = onOpenExport,
+                        ) {
+                            Text(text = stringResource(id = R.string.editor_open_export))
+                        }
+                    }
+                }
+            }
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(20.dp),
+                .padding(innerPadding),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                ),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    ),
                 ) {
-                    SectionHeader(
-                        eyebrow = stringResource(id = R.string.editor_review_eyebrow),
-                        title = title,
-                        supportingText = stringResource(
-                            id = R.string.editor_review_summary,
-                            orderedPages.size,
-                        ),
-                    )
-                    Text(
-                        text = stringResource(id = R.string.editor_review_helper),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            Card {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth(),
-                        value = title,
-                        onValueChange = { title = it },
-                        label = { Text(text = stringResource(id = R.string.editor_document_name)) },
-                        singleLine = true,
-                    )
-                    OutlinedButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { onRename(title) },
-                        enabled = hasTitleChanges,
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        Text(text = stringResource(id = R.string.editor_save_name))
-                    }
-                    OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth(),
-                        value = tags,
-                        onValueChange = { tags = it },
-                        label = { Text(text = stringResource(id = R.string.editor_tags)) },
-                        supportingText = { Text(text = stringResource(id = R.string.editor_tags_helper)) },
-                    )
-                    OutlinedButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { onUpdateTags(tags) },
-                        enabled = hasTagChanges,
-                    ) {
-                        Text(text = stringResource(id = R.string.editor_save_tags))
+                        SectionHeader(
+                            eyebrow = stringResource(id = R.string.editor_review_eyebrow),
+                            title = title,
+                            supportingText = stringResource(
+                                id = R.string.editor_review_summary,
+                                orderedPages.size,
+                            ),
+                        )
+                        Text(
+                            text = stringResource(id = R.string.editor_review_helper),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
             }
-            SectionHeader(
-                eyebrow = stringResource(id = R.string.editor_pages_eyebrow),
-                title = stringResource(id = R.string.editor_pages_section),
-                supportingText = stringResource(id = R.string.editor_pages_supporting),
-            )
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                itemsIndexed(
-                    items = orderedPages,
-                    key = { _, page -> page.id },
-                ) { index, page ->
-                    PageActionsCard(
+            item {
+                Card {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth(),
+                            value = title,
+                            onValueChange = { title = it },
+                            label = { Text(text = stringResource(id = R.string.editor_document_name)) },
+                            singleLine = true,
+                        )
+                        OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth(),
+                            value = tags,
+                            onValueChange = { tags = it },
+                            label = { Text(text = stringResource(id = R.string.editor_tags)) },
+                            supportingText = {
+                                Text(text = stringResource(id = R.string.editor_tags_helper))
+                            },
+                        )
+                        OutlinedButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                onRename(title)
+                                onUpdateTags(tags)
+                            },
+                            enabled = hasMetadataChanges,
+                        ) {
+                            Text(text = stringResource(id = R.string.editor_save_metadata))
+                        }
+                    }
+                }
+            }
+            item {
+                SectionHeader(
+                    eyebrow = stringResource(id = R.string.editor_pages_eyebrow),
+                    title = stringResource(id = R.string.editor_pages_section),
+                    supportingText = stringResource(id = R.string.editor_pages_supporting),
+                )
+            }
+            itemsIndexed(
+                items = orderedPages,
+                key = { _, page -> page.id },
+            ) { index, page ->
+                val selected = state.currentPage?.id == page.id
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    PageThumbnailCard(
                         title = stringResource(id = R.string.editor_page_title, page.index + 1),
-                        subtitle = page.filterType.title,
-                        imageUri = page.displayUri,
-                        selected = state.currentPage?.id == page.id,
-                        onSelect = { onSelectPage(page.id) },
-                        onMoveUp = { onMovePageUp(page.id) },
-                        onMoveDown = { onMovePageDown(page.id) },
-                        onOpenOcr = { onOpenOcr(page.id) },
-                        canMoveUp = index > 0,
-                        canMoveDown = index < orderedPages.lastIndex,
-                    )
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                FilledTonalButton(
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenCrop,
-                    enabled = state.currentPage != null,
-                ) {
-                    Text(text = stringResource(id = R.string.editor_open_crop))
-                }
-                FilledTonalButton(
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenFilters,
-                    enabled = state.currentPage != null,
-                ) {
-                    Text(text = stringResource(id = R.string.editor_open_filters))
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                OutlinedButton(
-                    modifier = Modifier.weight(1f),
-                    onClick = onDeleteCurrentPage,
-                    enabled = state.currentPage != null,
-                ) {
-                    Text(text = stringResource(id = R.string.editor_delete_page))
-                }
-                Button(
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenExport,
-                ) {
-                    Text(text = stringResource(id = R.string.editor_open_export))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PageActionsCard(
-    title: String,
-    subtitle: String,
-    imageUri: String,
-    selected: Boolean,
-    onSelect: () -> Unit,
-    onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit,
-    onOpenOcr: () -> Unit,
-    canMoveUp: Boolean,
-    canMoveDown: Boolean,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) {
-                MaterialTheme.colorScheme.surfaceContainerHigh
-            } else {
-                MaterialTheme.colorScheme.surface
-            },
-        ),
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            AsyncUriImage(
-                imageUri = imageUri,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(164.dp),
-                contentScale = ContentScale.Crop,
-                maxDimension = 1200,
-            )
-            Text(text = title, style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = if (selected) {
-                    stringResource(id = R.string.editor_page_subtitle_selected, subtitle)
-                } else {
-                    subtitle
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Button(
-                    modifier = Modifier.weight(1f),
-                    onClick = onSelect,
-                    enabled = !selected,
-                ) {
-                    Text(
-                        text = if (selected) {
-                            stringResource(id = R.string.editor_page_selected)
+                        subtitle = if (selected) {
+                            stringResource(id = R.string.editor_page_subtitle_selected, page.filterType.title)
                         } else {
-                            stringResource(id = R.string.editor_select_page)
+                            page.filterType.title
                         },
+                        imageUri = page.displayUri,
+                        overline = stringResource(id = R.string.editor_page_overline, page.index + 1),
+                        badge = if (selected) {
+                            stringResource(id = R.string.editor_page_selected_badge)
+                        } else {
+                            null
+                        },
+                        selected = selected,
+                        onClick = { onSelectPage(page.id) },
                     )
-                }
-                OutlinedButton(
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenOcr,
-                ) {
-                    Text(text = stringResource(id = R.string.editor_open_ocr))
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                OutlinedButton(
-                    modifier = Modifier.weight(1f),
-                    onClick = onMoveUp,
-                    enabled = canMoveUp,
-                ) {
-                    Text(text = stringResource(id = R.string.editor_move_up))
-                }
-                OutlinedButton(
-                    modifier = Modifier.weight(1f),
-                    onClick = onMoveDown,
-                    enabled = canMoveDown,
-                ) {
-                    Text(text = stringResource(id = R.string.editor_move_down))
+                    if (selected) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            FilledTonalButton(
+                                modifier = Modifier.weight(1f),
+                                onClick = { onOpenOcr(page.id) },
+                            ) {
+                                Text(text = stringResource(id = R.string.editor_open_ocr))
+                            }
+                            OutlinedButton(
+                                modifier = Modifier.weight(1f),
+                                onClick = { onMovePageUp(page.id) },
+                                enabled = index > 0,
+                            ) {
+                                Text(text = stringResource(id = R.string.editor_move_up))
+                            }
+                        }
+                        OutlinedButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = { onMovePageDown(page.id) },
+                            enabled = index < orderedPages.lastIndex,
+                        ) {
+                            Text(text = stringResource(id = R.string.editor_move_down))
+                        }
+                    }
                 }
             }
         }
@@ -753,9 +735,9 @@ private fun defaultQuad(): DocumentQuad =
     )
 
 private fun DocumentFilterType.description(): String = when (this) {
-    DocumentFilterType.ORIGINAL_CORRECTED -> "Mantém as cores naturais com correção de perspectiva."
-    DocumentFilterType.DOCUMENT_BLACK_WHITE -> "Alto contraste para texto e impressão."
-    DocumentFilterType.DOCUMENT_GRAY -> "Leitura confortável com ruído reduzido."
-    DocumentFilterType.COLOR_ENHANCED -> "Realça cor sem exagerar no documento."
-    DocumentFilterType.RECEIPT_HIGH_CONTRAST -> "Ajuda em recibos térmicos e papéis apagados."
+    DocumentFilterType.ORIGINAL_CORRECTED -> "Mantém as cores do papel com correção de perspectiva e limpeza suave."
+    DocumentFilterType.DOCUMENT_BLACK_WHITE -> "Texto mais firme para impressão, estudo e arquivos simples."
+    DocumentFilterType.DOCUMENT_GRAY -> "Mantém leitura confortável sem lavar o miolo da página."
+    DocumentFilterType.COLOR_ENHANCED -> "Recupera contraste e cor sem exagerar no documento."
+    DocumentFilterType.RECEIPT_HIGH_CONTRAST -> "Focado em recibos, notas térmicas e papéis mais apagados."
 }

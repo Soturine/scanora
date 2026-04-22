@@ -2,18 +2,21 @@ package com.soturine.scanora.feature.ocr
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -37,11 +40,18 @@ import com.soturine.scanora.core.ui.component.SectionHeader
 fun OcrScreen(
     state: OcrUiState,
     onRecognizeAgain: () -> Unit,
+    onBack: () -> Unit,
     onClearMessage: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val clipboardManager = LocalClipboardManager.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val paragraphs = remember(state.text) {
+        state.text
+            .split(Regex("\\n{2,}"))
+            .map(String::trim)
+            .filter(String::isNotBlank)
+    }
 
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
@@ -55,6 +65,14 @@ fun OcrScreen(
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(id = R.string.ocr_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(id = R.string.ocr_back),
+                        )
+                    }
+                },
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -68,66 +86,97 @@ fun OcrScreen(
                     .padding(24.dp),
             )
         } else {
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(20.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                SectionHeader(
-                    eyebrow = stringResource(id = R.string.ocr_eyebrow),
-                    title = if (state.isLoading) {
-                        stringResource(id = R.string.ocr_processing)
-                    } else {
-                        stringResource(id = R.string.ocr_result_title)
-                    },
-                    supportingText = stringResource(
-                        id = R.string.ocr_supporting,
-                        state.page.filterType.title,
-                    ),
-                )
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    ),
-                ) {
-                    AsyncUriImage(
-                        imageUri = state.page.displayUri,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(196.dp),
-                    )
-                }
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                    ),
-                ) {
-                    SelectionContainer {
-                        Text(
-                            text = state.text.ifBlank { stringResource(id = R.string.ocr_empty_text) },
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        ),
+                    ) {
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(18.dp),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            SectionHeader(
+                                eyebrow = stringResource(id = R.string.ocr_eyebrow),
+                                title = if (state.isLoading) {
+                                    stringResource(id = R.string.ocr_processing)
+                                } else {
+                                    stringResource(id = R.string.ocr_result_title)
+                                },
+                                supportingText = stringResource(
+                                    id = R.string.ocr_supporting,
+                                    state.page.filterType.title,
+                                ),
+                            )
+                            AsyncUriImage(
+                                imageUri = state.page.displayUri,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(208.dp),
+                                maxDimension = 1600,
+                            )
+                        }
                     }
                 }
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { clipboardManager.setText(AnnotatedString(state.text)) },
-                    enabled = state.text.isNotBlank(),
-                ) {
-                    Text(text = stringResource(id = R.string.ocr_copy))
+                if (paragraphs.isEmpty() && !state.isLoading) {
+                    item {
+                        EmptyStateCard(
+                            title = stringResource(id = R.string.ocr_empty_title),
+                            message = stringResource(id = R.string.ocr_empty_text),
+                        )
+                    }
+                } else {
+                    item {
+                        Card {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(18.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp),
+                            ) {
+                                paragraphs.forEach { paragraph ->
+                                    Text(
+                                        text = paragraph,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                }
+                                if (state.isLoading && paragraphs.isEmpty()) {
+                                    Text(
+                                        text = stringResource(id = R.string.ocr_processing_detail),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
-                FilledTonalButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = onRecognizeAgain,
-                ) {
-                    Text(text = stringResource(id = R.string.ocr_retry))
+                item {
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { clipboardManager.setText(AnnotatedString(state.text)) },
+                        enabled = state.text.isNotBlank(),
+                    ) {
+                        Text(text = stringResource(id = R.string.ocr_copy))
+                    }
+                }
+                item {
+                    FilledTonalButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = onRecognizeAgain,
+                    ) {
+                        Text(text = stringResource(id = R.string.ocr_retry))
+                    }
                 }
             }
         }
