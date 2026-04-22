@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scanora</title>
+  <meta
+    name="description"
+    content="Scanora é um scanner de documentos para Android com OCR local, exportação em PDF/JPG/PNG e foco em privacidade."
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="hero-shell">
+    <nav class="nav">
+      <a class="brand" href="#top">Scanora</a>
+      <div class="nav-links">
+        <a href="#produto">Produto</a>
+        <a href="#privacidade">Privacidade</a>
+        <a href="#instalacao">Instalação</a>
+        <a href="#faq">FAQ</a>
+      </div>
+    </nav>
+
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <p class="eyebrow">Android document scanning</p>
+        <h1>Escaneie, revise e exporte documentos com processamento local.</h1>
+        <p class="lead">
+          Scanora organiza um fluxo enxuto para captura, correção de perspectiva,
+          filtros de documento, OCR no dispositivo e exportação em PDF, JPG ou PNG.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="https://github.com/Soturine/scanora">Ver no GitHub</a>
+          <a class="button secondary" href="https://github.com/Soturine/scanora/releases">Releases</a>
+        </div>
+        <div class="status-strip">
+          <span>Versão atual: 0.1.2</span>
+          <span>Status: MVP ativo</span>
+          <span>Package: com.soturine.scanora</span>
+        </div>
+      </div>
+
+      <div class="hero-panel">
+        <div class="panel-card">
+          <p class="panel-label">Fluxo principal</p>
+          <h2>Captura → ajuste → filtros → OCR → exportação</h2>
+          <p>
+            O app foi estruturado para sair da câmera e chegar a um arquivo final sem depender
+            de backend ou upload obrigatório.
+          </p>
+        </div>
+        <div class="panel-grid">
+          <div class="mini-panel">Caderno / Faculdade</div>
+          <div class="mini-panel">Documento / Contrato</div>
+          <div class="mini-panel">Recibo / Nota</div>
+          <div class="mini-panel">Histórico local</div>
+        </div>
+      </div>
+    </section>
+  </header>
+
+  <main>
+    <section class="section" id="produto">
+      <div class="section-heading">
+        <p class="eyebrow">Produto</p>
+        <h2>Base sólida para um scanner Android moderno.</h2>
+      </div>
+      <div class="grid two">
+        <article class="card">
+          <h3>Captura híbrida</h3>
+          <p>CameraX para fluxo manual e ML Kit Document Scanner para um caminho guiado mais rápido no MVP.</p>
+        </article>
+        <article class="card">
+          <h3>Processamento local</h3>
+          <p>Correção geométrica, limpeza de bordas, normalização de iluminação e filtros orientados à legibilidade.</p>
+        </article>
+        <article class="card">
+          <h3>OCR no dispositivo</h3>
+          <p>Reconhecimento de texto local com cópia rápida e reaproveitamento no histórico do documento.</p>
+        </article>
+        <article class="card">
+          <h3>Organização simples</h3>
+          <p>Título, tags, favoritos, histórico pesquisável e exportação por lote com múltiplas páginas.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section muted">
+      <div class="section-heading">
+        <p class="eyebrow">Capturas</p>
+        <h2>Capturas reais em breve.</h2>
+      </div>
+      <div class="grid three">
+        <div class="card subtle">
+          <h3>Home</h3>
+          <p>CTA principal para escanear, escolha de modo e acesso rápido ao histórico.</p>
+        </div>
+        <div class="card subtle">
+          <h3>Editor</h3>
+          <p>Ajuste manual de quadrilátero, filtros e revisão de páginas do lote.</p>
+        </div>
+        <div class="card subtle">
+          <h3>Exportação</h3>
+          <p>Seleção de formato, qualidade e compartilhamento local com feedback de progresso.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="privacidade">
+      <div class="section-heading">
+        <p class="eyebrow">Privacidade</p>
+        <h2>Sem backend obrigatório no MVP.</h2>
+      </div>
+      <div class="privacy-panel">
+        <p>
+          Scanora prioriza processamento local, armazenamento local e compartilhamento por APIs
+          padrão do Android. O app não exige login nem sincronização em nuvem para funcionar.
+        </p>
+        <ul>
+          <li>OCR no dispositivo com ML Kit</li>
+          <li>Exportação de PDF, JPG e PNG localmente</li>
+          <li>Permissão de câmera apenas para captura manual</li>
+          <li>Sem upload automático de documentos</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section" id="instalacao">
+      <div class="section-heading">
+        <p class="eyebrow">Instalação</p>
+        <h2>Como rodar o projeto.</h2>
+      </div>
+      <div class="card code-card">
+        <pre><code>git clone https://github.com/Soturine/scanora.git
+cd scanora
+./gradlew assembleDebug</code></pre>
+        <p>Use Android Studio com JDK 17+ e Android SDK Platform 36 com Build Tools 36.0.0.</p>
+      </div>
+      <div class="callout">
+        <strong>GitHub Pages:</strong> após publicar o repositório, ative em
+        <code>Settings &gt; Pages &gt; Source: GitHub Actions</code>.
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Documentação</p>
+        <h2>Referências rápidas.</h2>
+      </div>
+      <div class="grid two">
+        <a class="card link-card" href="https://github.com/Soturine/scanora/blob/main/docs/architecture.md">Arquitetura</a>
+        <a class="card link-card" href="https://github.com/Soturine/scanora/blob/main/docs/setup.md">Setup</a>
+        <a class="card link-card" href="https://github.com/Soturine/scanora/blob/main/docs/testing.md">Testes</a>
+        <a class="card link-card" href="https://github.com/Soturine/scanora/blob/main/PRIVACY_POLICY.md">Privacidade</a>
+      </div>
+    </section>
+
+    <section class="section muted">
+      <div class="section-heading">
+        <p class="eyebrow">Roadmap</p>
+        <h2>Próximos passos.</h2>
+      </div>
+      <div class="grid three">
+        <article class="card">
+          <h3>Curto prazo</h3>
+          <p>Fechar capturas reais, QA visual e lapidar o editor de páginas.</p>
+        </article>
+        <article class="card">
+          <h3>Médio prazo</h3>
+          <p>Ampliar testes, melhorar multi-importação e fortalecer o pipeline local de imagem.</p>
+        </article>
+        <article class="card">
+          <h3>Longo prazo</h3>
+          <p>Preparar release 1.0 com material de store, QA em dispositivos e rotina de publicação.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="section-heading">
+        <p class="eyebrow">FAQ</p>
+        <h2>Perguntas rápidas.</h2>
+      </div>
+      <div class="grid three">
+        <article class="card">
+          <h3>Funciona offline?</h3>
+          <p>Sim. O MVP prioriza processamento local. O scanner guiado pode depender do Google Play services no aparelho.</p>
+        </article>
+        <article class="card">
+          <h3>O CI está ativo?</h3>
+          <p>Sim. O Android CI builda o projeto e roda lint e testes unitários no GitHub Actions.</p>
+        </article>
+        <article class="card">
+          <h3>Já está pronto para produção?</h3>
+          <p>É uma base séria e funcional, mas ainda faltam capturas reais, QA visual e lapidação de release.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Scanora • 0.1.2 • Projeto Android open-source com foco em privacidade local.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

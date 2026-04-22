@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.seunome.scanora.feature.ocr"
+    namespace = "com.soturine.scanora.feature.ocr"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {

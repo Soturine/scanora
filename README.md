@@ -3,47 +3,32 @@
 ![Android](https://img.shields.io/badge/platform-Android-2E7D8C)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-23414B)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-DD8A2E)
-![Version](https://img.shields.io/badge/version-0.1.1-133942)
-![Status](https://img.shields.io/badge/status-MVP%20ativo-2E7D8C)
+![Version](https://img.shields.io/badge/version-0.1.2-133942)
 [![Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml)
 [![Deploy Pages](https://github.com/Soturine/scanora/actions/workflows/pages.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/pages.yml)
 
-Repositorio: https://github.com/Soturine/scanora
-Site: https://soturine.github.io/scanora/
-Releases: https://github.com/Soturine/scanora/releases
+Scanora é um app Android de escaneamento de documentos com foco em processamento local, OCR no dispositivo e um fluxo direto de captura, revisão e exportação.
 
-Scanora é um app Android original de escaneamento de documentos com foco em privacidade, processamento local e uma experiência rápida de captura, revisão e exportação.
+Repositório: https://github.com/Soturine/scanora  
+Releases: https://github.com/Soturine/scanora/releases  
+Site: https://soturine.github.io/scanora/
 
 ## Proposta de valor
 
-- Escanear documentos, recibos e páginas de estudo sem depender de upload obrigatório.
-- Corrigir perspectiva, aplicar filtros e organizar lotes localmente.
-- Exportar PDF, JPG e PNG com fluxo pensado para MVP evolutivo.
-- Executar OCR local para copiar texto reconhecido com poucos toques.
+- escanear documentos, recibos e páginas de estudo sem upload obrigatório;
+- corrigir perspectiva, aplicar filtros e organizar lotes localmente;
+- exportar PDF, JPG e PNG com compartilhamento nativo do Android;
+- executar OCR local para copiar texto reconhecido com poucos toques.
 
-## Destaques do MVP
+## Capturas
 
-- Fluxo híbrido com `CameraX` para captura manual e `ML Kit Document Scanner` para scanner guiado.
-- OCR com `ML Kit Text Recognition`.
-- Organização local com `Room`, busca por título, favoritos e tags.
-- Preferências locais com `DataStore`.
-- Exportação local com `PdfDocument` e compartilhamento via `FileProvider`.
-- Tema claro/escuro e onboarding curto em português do Brasil.
-
-## Screenshots
-
-Placeholders iniciais:
-
-- ![Home](docs/assets/screenshots/home.svg)
-- ![Captura](docs/assets/screenshots/camera.svg)
-- ![Editor](docs/assets/screenshots/editor.svg)
-- ![Histórico](docs/assets/screenshots/history.svg)
+Capturas reais em breve.  
+Enquanto isso, o repositório já está validado com build Android, lint e testes unitários passando no CI.
 
 ## Stack
 
 - Kotlin
 - Android Gradle Plugin 9.1.0
-- Gradle 9.3.1 Wrapper
 - Jetpack Compose + Material 3
 - Navigation Compose
 - ViewModel + Coroutines + Flow
@@ -54,62 +39,50 @@ Placeholders iniciais:
 - ML Kit Document Scanner
 - ML Kit Text Recognition
 
-## Arquitetura resumida
+## Arquitetura
 
-Estrutura modular usada no repositório:
+- `app`: bootstrap, navegação, onboarding e integração dos módulos
+- `core-common`: modelos, contratos e use cases
+- `core-data`: Room, DataStore, OCR, exportação e processamento de imagem
+- `core-ui`: tema e componentes reutilizáveis
+- `feature-*`: telas e ViewModels por contexto funcional
 
-- `app`: entrypoint, navegação, onboarding, splash e composição dos módulos.
-- `core-common`: modelos, contratos de repositório e use cases centrais.
-- `core-data`: Room, DataStore, OCR, exportação e pipeline local de imagem.
-- `core-ui`: tema e componentes reutilizáveis de UI.
-- `feature-home`, `feature-camera`, `feature-editor`, `feature-export`, `feature-history`, `feature-settings`, `feature-ocr`: telas e ViewModels por contexto funcional.
-
-Mais detalhes em [docs/architecture.md](docs/architecture.md).
+Documentação técnica:
+- [docs/architecture.md](docs/architecture.md)
+- [docs/decisions.md](docs/decisions.md)
+- [docs/setup.md](docs/setup.md)
+- [docs/testing.md](docs/testing.md)
+- [docs/publishing.md](docs/publishing.md)
 
 ## Como rodar
 
-1. Abra o projeto no Android Studio mais recente com suporte a AGP 9.1.
-2. Use JDK 17 ou superior compatível com AGP 9 no Gradle.
+1. Abra o projeto no Android Studio com suporte a AGP 9.1.
+2. Use JDK 17 ou superior compatível com AGP 9.
 3. Instale Android SDK Platform 36 e Build Tools 36.0.0.
-4. Rode `./gradlew assembleDebug` ou use o botão Run do Android Studio.
+4. Rode `./gradlew assembleDebug` ou execute o módulo `app`.
 
-Setup detalhado: [docs/setup.md](docs/setup.md)
+Package atual:
+- `applicationId`: `com.soturine.scanora`
+- namespace base: `com.soturine.scanora`
+
+## GitHub e CI
+
+- O workflow [Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml) builda o projeto, roda lint e testes unitários.
+- O site em GitHub Pages é publicado a partir de `site/`.
+- Para o Pages funcionar no repositório publicado, ative em `Settings > Pages > Source: GitHub Actions`.
 
 ## Privacidade
 
-- Processamento local por padrão.
-- OCR e filtros são executados no dispositivo sempre que possível.
-- O scanner guiado do ML Kit depende de componentes do Google Play services no aparelho.
-- O app não exige backend nem conta para funcionar no MVP.
+- processamento local por padrão;
+- OCR e filtros executados no dispositivo sempre que possível;
+- sem backend obrigatório, login ou sync no MVP.
 
-Leia a política em [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
+Política completa em [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
-## Limitações atuais
+## Status
 
-- O pipeline local de detecção de documento ainda é heurístico para importações/capturas manuais.
-- O scanner guiado depende da disponibilidade do ML Kit no dispositivo.
-- Build, lint e testes unitários foram validados localmente em 2026-04-21 com Android SDK Platform 36.
-- A revisão visual desta rodada foi estática, via Compose/code review; ainda vale fechar QA em emulador e dispositivos reais.
-- Ainda não há sincronização em nuvem, criptografia em repouso ou edição colaborativa.
+`0.1.2` representa um MVP funcional com estrutura mais limpa de repositório, package real e CI ativo. Ainda faltam capturas reais, QA visual em dispositivos e refinamentos para uma release 1.0.
 
-## Contribuição
+## Contribuir
 
-Contribuições são bem-vindas. Consulte:
-
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-- [SECURITY.md](SECURITY.md)
-
-## Roadmap
-
-Resumo curto:
-
-- Curto prazo: melhorar detecção de contornos, UX de crop e qualidade de exportação.
-- Médio prazo: lote multi-importação mais robusto, favoritos avançados e mais testes.
-- Longo prazo: preparação de release 1.0, hardening de storage e refinamento de OCR.
-
-Versão completa em [ROADMAP.md](ROADMAP.md).
-
-## Status do projeto
-
-`0.1.1` representa um MVP funcional e escalável, já validado em build local e pronto para refinamento técnico e polimento de produção.
+Consulte [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), [SECURITY.md](SECURITY.md) e [ROADMAP.md](ROADMAP.md).

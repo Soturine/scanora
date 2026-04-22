@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.seunome.scanora.feature.home"
+    namespace = "com.soturine.scanora.feature.home"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {

@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.seunome.scanora.feature.history"
+    namespace = "com.soturine.scanora.feature.history"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {

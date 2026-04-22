@@ -4,7 +4,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "docs/**"
+      - "site/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -31,7 +31,7 @@ jobs:
         run: |
           rm -rf _site
           mkdir -p _site
-          cp -R docs/. _site/
+          cp -R site/. _site/
           touch _site/.nojekyll
 
       - name: Upload artifact
@@ -42,7 +42,7 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: placeholder-page-url
+      url: ${{ steps.deployment.outputs.page_url }}
     needs: build
     runs-on: ubuntu-latest
     steps:

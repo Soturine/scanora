@@ -7,6 +7,7 @@
 - Android SDK Platform 36
 - Android SDK Build Tools 36.0.0
 - Emulador Android recente ou dispositivo físico
+- `applicationId`: `com.soturine.scanora`
 
 ## Passos
 

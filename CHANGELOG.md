@@ -2,6 +2,30 @@
 
 Este projeto segue Semantic Versioning e recomenda Conventional Commits no fluxo de contribuição.
 
+## [0.1.2] - 2026-04-22
+
+### Added
+
+- Estrutura `planning/` para documentos de escopo e planejamento.
+- Diretório `site/` dedicado ao GitHub Pages, separado da documentação técnica.
+
+### Changed
+
+- Rename completo de package, namespace e `applicationId` para `com.soturine.scanora`.
+- README, site e workflows foram revisados para deixar a apresentação pública mais direta e consistente.
+- `docs/` passou a conter apenas documentação técnica em Markdown.
+
+### Fixed
+
+- Links e templates que ainda apontavam para placeholders antigos ou para caminhos legados do site.
+- Workflow do GitHub Pages agora publica `site/` em vez de `docs/`.
+- Referências internas do projeto foram alinhadas ao package real sem quebrar imports.
+
+### Planned
+
+- Substituir mockups e placeholders por capturas reais do app em emulador ou dispositivo.
+- Refinar o material de release e o checklist para publicação 1.0.
+
 ## [0.1.1] - 2026-04-21
 
 ### Added
@@ -23,7 +47,7 @@ Este projeto segue Semantic Versioning e recomenda Conventional Commits no fluxo
 
 ### Planned
 
-- Rodar revisão visual em emulador/dispositivos reais para validar espaçamento, responsividade e estados extremos.
+- Rodar revisão visual em emulador ou dispositivos reais para validar espaçamento, responsividade e estados extremos.
 - Ampliar cobertura de testes instrumentados para fluxos de revisão, OCR e exportação.
 
 ## [0.1.0] - 2026-04-21

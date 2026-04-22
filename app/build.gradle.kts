@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.seunome.scanora"
+    namespace = "com.soturine.scanora"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.seunome.scanora"
+        applicationId = "com.soturine.scanora"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = libs.versions.versionCode.get().toInt()
