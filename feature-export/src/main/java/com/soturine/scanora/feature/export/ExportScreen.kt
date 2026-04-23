@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -30,6 +31,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -48,6 +50,7 @@ fun ExportScreen(
     onSelectQuality: (PdfQuality) -> Unit,
     onExport: () -> Unit,
     onShare: (List<ExportedFile>) -> Unit,
+    onOpenFile: (ExportedFile) -> Unit,
     onBack: () -> Unit,
     onClearMessage: () -> Unit,
     modifier: Modifier = Modifier,
@@ -102,7 +105,7 @@ fun ExportScreen(
                             Text(text = stringResource(id = R.string.export_action))
                         }
                         if (state.exportedFiles.isNotEmpty()) {
-                            OutlinedButton(
+                            FilledTonalButton(
                                 modifier = Modifier.fillMaxWidth(),
                                 onClick = { onShare(state.exportedFiles) },
                             ) {
@@ -142,7 +145,7 @@ fun ExportScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(18.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             SectionHeader(
                                 eyebrow = stringResource(id = R.string.export_eyebrow),
@@ -196,7 +199,7 @@ fun ExportScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(18.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp),
                             ) {
                                 SectionHeader(
                                     eyebrow = stringResource(id = R.string.export_ready_eyebrow),
@@ -207,20 +210,10 @@ fun ExportScreen(
                                     ),
                                 )
                                 state.exportedFiles.forEach { file ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                    ) {
-                                        Text(
-                                            text = file.displayName,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                        )
-                                        Text(
-                                            text = file.sizeLabel(),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    }
+                                    ExportedFileCard(
+                                        file = file,
+                                        onOpen = { onOpenFile(file) },
+                                    )
                                 }
                             }
                         }
@@ -231,16 +224,88 @@ fun ExportScreen(
     }
 }
 
+@Composable
+private fun ExportedFileCard(
+    file: ExportedFile,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = file.displayName,
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    Text(
+                        text = file.mimeType.typeLabel(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Text(
+                    text = file.sizeLabel(),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Text(
+                text = stringResource(id = R.string.export_location_label, file.locationLabel),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            file.pathHint?.takeIf { it.isNotBlank() }?.let { pathHint ->
+                Text(
+                    text = pathHint,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            OutlinedButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onOpen,
+            ) {
+                Text(text = stringResource(id = R.string.export_open_file_action))
+            }
+        }
+    }
+}
+
 private fun ExportFormat.description(): String = when (this) {
-    ExportFormat.PDF -> "Ideal para enviar ou arquivar um lote inteiro em um único documento."
-    ExportFormat.JPG -> "Exporta cada página como imagem leve e fácil de compartilhar."
-    ExportFormat.PNG -> "Mantém mais detalhe por página quando o lote precisa de imagem individual."
+    ExportFormat.PDF -> "Melhor para enviar ou arquivar o lote inteiro em um único documento."
+    ExportFormat.JPG -> "Salva cada página como imagem leve e fácil de compartilhar."
+    ExportFormat.PNG -> "Mantém mais detalhe por página quando a saída precisa ficar em imagem."
 }
 
 private fun PdfQuality.description(): String = when (this) {
-    PdfQuality.COMPACT -> "Menos peso para envio rápido."
-    PdfQuality.BALANCED -> "Equilíbrio entre clareza e tamanho."
+    PdfQuality.COMPACT -> "Arquivo menor para envio rápido."
+    PdfQuality.BALANCED -> "Equilíbrio entre nitidez e tamanho."
     PdfQuality.HIGH -> "Mais definição para leitura fina e impressão."
+}
+
+private fun String.typeLabel(): String = when (this) {
+    ExportFormat.PDF.mimeType -> "Documento PDF"
+    ExportFormat.JPG.mimeType -> "Imagem JPG"
+    ExportFormat.PNG.mimeType -> "Imagem PNG"
+    else -> this
 }
 
 private fun ExportedFile.sizeLabel(): String {

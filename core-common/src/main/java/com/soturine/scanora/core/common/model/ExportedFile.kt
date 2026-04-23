@@ -5,5 +5,6 @@ data class ExportedFile(
     val uri: String,
     val mimeType: String,
     val sizeBytes: Long,
+    val locationLabel: String,
+    val pathHint: String? = null,
 )
-

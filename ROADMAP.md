@@ -75,20 +75,32 @@ Este roadmap prioriza estabilidade, usabilidade e qualidade real do fluxo de esc
 
 ## v0.2.0 — A Experiência Premium
 
-**Objetivo:** polir performance percebida, QA visual real e acabamento público do projeto.
+**Status:** concluída em 2026-04-23
 
-### Foco
+**Objetivo:** polir qualidade perceptível do app, endurecer o caminho manual/importado e deixar OCR e exportação mais próximos de um scanner utilizável de verdade.
 
-- QA visual em aparelho real e capturas oficiais
-- melhorias de fluidez na abertura, navegação e exportação
-- acabamento visual final nas telas principais
-- capturas reais no README e no site
+### Entregue
 
-### Critérios de pronto
+- heurística inicial de crop refeita para sair de um retângulo aberto demais e estimar um quadrilátero mais útil
+- filtros recalibrados para documento real, com menos página estourada, menos cinza artificial e prévia mais fiel
+- OCR passou a usar imagem preparada especificamente para leitura, em vez de depender só do filtro salvo na página
+- revisão de lote simplificada com foco na página em destaque, menos peso visual e ações mais diretas
+- exportação com pós-exporto mais claro: nome, tipo, tamanho, local salvo e ação para abrir o arquivo
+- arquivos exportados agora vão para `Downloads/Scanora` em Android 10+
+- cache leve em memória para previews e thumbnails, reduzindo custo visual em navegação
+- Home reforça o scanner rápido como caminho recomendado, mantendo manual e galeria como fallback claro
 
-- app abre e navega com mais fluidez
-- material público substitui placeholders por capturas reais
-- ajustes finais de OCR, exportação e compartilhamento em dispositivos reais
+### Resultado esperado desta release
+
+- auto crop manual/importado fica mais útil no primeiro palpite
+- filtros deixam de piorar documentos em vários cenários comuns
+- OCR fica menos poluído e mais prático para copiar texto
+- exportação deixa claro onde o arquivo foi salvo
+- o app transmite mais confiança no fluxo completo, da revisão ao pós-export
+
+### Observação desta rodada
+
+- as capturas oficiais em aparelho real seguem como fechamento natural de QA visual, mas não foram forçadas nesta máquina depois de instabilidade do emulador
 
 ---
 
@@ -96,9 +108,10 @@ Este roadmap prioriza estabilidade, usabilidade e qualidade real do fluxo de esc
 
 ### Candidatos para uma fase futura
 
+- QA visual final em aparelho e publicação das capturas oficiais
+- baseline profiles, benchmarks e tuning fino de performance
 - presets mais avançados por tipo de documento
 - melhorias reais de PDF e compressão por lote
-- baseline profiles, benchmarks e tuning fino
 - criptografia local opcional para lotes sensíveis
 
 ### Itens que ficam para depois de estabilizar o básico

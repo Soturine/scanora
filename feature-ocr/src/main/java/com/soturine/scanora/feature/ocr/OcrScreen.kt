@@ -3,11 +3,13 @@ package com.soturine.scanora.feature.ocr
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -114,16 +116,34 @@ fun OcrScreen(
                                 },
                                 supportingText = stringResource(
                                     id = R.string.ocr_supporting,
-                                    state.page.filterType.title,
+                                    paragraphs.size,
                                 ),
                             )
                             AsyncUriImage(
-                                imageUri = state.page.displayUri,
+                                imageUri = state.previewImageUri ?: state.page.displayUri,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(208.dp),
-                                maxDimension = 1600,
+                                    .height(216.dp),
+                                maxDimension = 1700,
                             )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                Button(
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { clipboardManager.setText(AnnotatedString(state.text)) },
+                                    enabled = state.text.isNotBlank(),
+                                ) {
+                                    Text(text = stringResource(id = R.string.ocr_copy))
+                                }
+                                FilledTonalButton(
+                                    modifier = Modifier.weight(1f),
+                                    onClick = onRecognizeAgain,
+                                ) {
+                                    Text(text = stringResource(id = R.string.ocr_retry))
+                                }
+                            }
                         }
                     }
                 }
@@ -136,46 +156,39 @@ fun OcrScreen(
                     }
                 } else {
                     item {
+                        SectionHeader(
+                            eyebrow = stringResource(id = R.string.ocr_blocks_eyebrow),
+                            title = stringResource(id = R.string.ocr_blocks_title),
+                            supportingText = if (state.isLoading && paragraphs.isEmpty()) {
+                                stringResource(id = R.string.ocr_processing_detail)
+                            } else {
+                                stringResource(id = R.string.ocr_blocks_supporting)
+                            },
+                        )
+                    }
+                    items(paragraphs.ifEmpty { listOf("") }) { paragraph ->
                         Card {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(18.dp),
-                                verticalArrangement = Arrangement.spacedBy(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                paragraphs.forEach { paragraph ->
+                                if (paragraph.isBlank()) {
+                                    Text(
+                                        text = stringResource(id = R.string.ocr_processing_detail),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                } else {
                                     Text(
                                         text = paragraph,
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.onSurface,
                                     )
                                 }
-                                if (state.isLoading && paragraphs.isEmpty()) {
-                                    Text(
-                                        text = stringResource(id = R.string.ocr_processing_detail),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
                             }
                         }
-                    }
-                }
-                item {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { clipboardManager.setText(AnnotatedString(state.text)) },
-                        enabled = state.text.isNotBlank(),
-                    ) {
-                        Text(text = stringResource(id = R.string.ocr_copy))
-                    }
-                }
-                item {
-                    FilledTonalButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = onRecognizeAgain,
-                    ) {
-                        Text(text = stringResource(id = R.string.ocr_retry))
                     }
                 }
             }

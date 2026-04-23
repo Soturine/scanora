@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.LruCache
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -73,6 +74,8 @@ private fun decodeBitmapForPreview(
     maxDimension: Int,
 ): Bitmap? {
     if (imageUri.isBlank()) return null
+    val cacheKey = "$imageUri|$maxDimension"
+    previewCache.get(cacheKey)?.let { return it }
     val uri = Uri.parse(imageUri)
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     openInputStream(context, uri)?.use { stream ->
@@ -90,6 +93,8 @@ private fun decodeBitmapForPreview(
     }
     return openInputStream(context, uri)?.use { stream ->
         BitmapFactory.decodeStream(stream, null, options)
+    }?.also { decoded ->
+        previewCache.put(cacheKey, decoded)
     }
 }
 
@@ -115,3 +120,11 @@ private fun openInputStream(
     uri.scheme.isNullOrBlank() -> File(uri.toString()).inputStream()
     else -> context.contentResolver.openInputStream(uri)
 }
+
+private val previewCache =
+    object : LruCache<String, Bitmap>(24 * 1024) {
+        override fun sizeOf(
+            key: String,
+            value: Bitmap,
+        ): Int = value.byteCount / 1024
+    }

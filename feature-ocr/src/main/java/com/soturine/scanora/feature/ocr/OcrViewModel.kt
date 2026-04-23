@@ -2,16 +2,18 @@ package com.soturine.scanora.feature.ocr
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.soturine.scanora.core.common.model.DocumentFilterType
 import com.soturine.scanora.core.common.model.ScanPage
+import com.soturine.scanora.core.common.repository.DocumentProcessingRepository
 import com.soturine.scanora.core.common.repository.OcrRepository
 import com.soturine.scanora.core.common.repository.ScanRepository
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -19,21 +21,25 @@ class OcrViewModel(
     private val scanId: String,
     private val pageId: String,
     private val scanRepository: ScanRepository,
+    private val processingRepository: DocumentProcessingRepository,
     private val ocrRepository: OcrRepository,
 ) : ViewModel() {
     private val recognizedText = MutableStateFlow("")
+    private val previewImageUri = MutableStateFlow<String?>(null)
     private val isLoading = MutableStateFlow(false)
     private val errorMessage = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<OcrUiState> = combine(
         scanRepository.observeScan(scanId),
+        previewImageUri,
         recognizedText,
         isLoading,
         errorMessage,
-    ) { scan, text, loading, message ->
+    ) { scan, previewUri, text, loading, message ->
         val page = scan?.pages?.firstOrNull { it.id == pageId }
         OcrUiState(
             page = page,
+            previewImageUri = previewUri ?: page?.displayUri,
             text = if (text.isBlank()) page?.ocrText.orEmpty() else text,
             isLoading = loading,
             errorMessage = message,
@@ -69,7 +75,14 @@ class OcrViewModel(
         isLoading.value = true
         errorMessage.value = null
         runCatching {
-            val text = ocrRepository.recognizeText(page.displayUri)
+            val preparedUri = processingRepository.processForOcr(
+                sourceUri = page.sourceUri,
+                quad = page.quad,
+                rotationDegrees = page.rotationDegrees,
+                preferReceiptMode = page.filterType == DocumentFilterType.RECEIPT_HIGH_CONTRAST,
+            )
+            previewImageUri.value = preparedUri
+            val text = ocrRepository.recognizeText(preparedUri)
             recognizedText.value = text
             scanRepository.updatePageOcr(scanId, pageId, text)
         }.onFailure { throwable ->

@@ -12,10 +12,11 @@ Não foi introduzido framework de injeção para manter o bootstrap simples e f�
 
 O projeto usa:
 
-- CameraX para cumprir captura manual e controle da experiência própria.
-- ML Kit Document Scanner para um caminho guiado, rápido e confiável no MVP.
+- CameraX para cumprir captura manual e controle da experiência própria;
+- ML Kit Document Scanner para o caminho principal, rápido e confiável;
+- editor manual local como fallback obrigatório quando o palpite inicial não basta.
 
-Isso evita prometer um pipeline local de detecção perfeito em todos os cenários logo na primeira versão.
+Isso evita prometer um pipeline local perfeito em todos os cenários, mas mantém autonomia de edição quando o scanner guiado não é suficiente.
 
 ## 4. Quadrilátero normalizado
 
@@ -25,11 +26,18 @@ As coordenadas do crop são armazenadas em formato proporcional (`0..1`) em vez 
 - edição manual no overlay;
 - reprocessamento da imagem em tamanhos diferentes.
 
-## 5. Exportação local
+## 5. Preview em duas etapas
 
-PDF, JPG e PNG são gerados no armazenamento do app e compartilhados via `FileProvider`. Não há storage permission ampla nem upload automático.
+A prévia de filtros não usa full-res na UI. O editor primeiro renderiza uma imagem intermediária rápida e depois substitui por uma refinada em segundo plano, com debounce, cancelamento de job e cache.
 
-## 6. Sem Firebase no MVP
+## 6. OCR com imagem preparada
+
+O OCR local não depende mais só do filtro final salvo da página. A decisão da `0.2.0` foi criar uma saída dedicada para leitura, reduzindo ruído visual e casos em que o próprio filtro prejudicava a engine.
+
+## 7. Exportação local mais encontrável
+
+PDF, JPG e PNG seguem locais, mas a `0.2.0` passa a usar `Downloads/Scanora` em Android 10+ para resolver o problema prático de “exportei e não achei o arquivo”.
+
+## 8. Sem Firebase no MVP
 
 Foi uma decisão consciente para manter o escopo honesto, offline e sem dependências de backend antes da hora.
-

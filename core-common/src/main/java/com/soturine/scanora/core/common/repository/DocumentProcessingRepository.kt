@@ -20,5 +20,11 @@ interface DocumentProcessingRepository {
         quad: DocumentQuad?,
         rotationDegrees: Int,
     ): String
-}
 
+    suspend fun processForOcr(
+        sourceUri: String,
+        quad: DocumentQuad?,
+        rotationDegrees: Int,
+        preferReceiptMode: Boolean,
+    ): String
+}

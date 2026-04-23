@@ -311,6 +311,7 @@ fun ScanoraNavHost(
                 onSelectQuality = exportViewModel::selectQuality,
                 onExport = exportViewModel::export,
                 onShare = { files -> shareFiles(context, files) },
+                onOpenFile = { file -> openExportedFile(context, file) },
                 onBack = { navController.popBackStack() },
                 onClearMessage = exportViewModel::clearMessage,
             )
@@ -329,6 +330,7 @@ fun ScanoraNavHost(
                     scanId = scanId,
                     pageId = pageId,
                     scanRepository = container.scanRepository,
+                    processingRepository = container.documentProcessingRepository,
                     ocrRepository = container.ocrRepository,
                 )
             }
@@ -404,7 +406,24 @@ private fun shareFiles(
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
     }
-    context.startActivity(Intent.createChooser(intent, "Compartilhar exportacao"))
+    context.startActivity(Intent.createChooser(intent, "Compartilhar exportação"))
+}
+
+private fun openExportedFile(
+    context: android.content.Context,
+    file: ExportedFile,
+) {
+    val uri = Uri.parse(file.uri)
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, file.mimeType)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    val packageManager = context.packageManager
+    if (intent.resolveActivity(packageManager) != null) {
+        context.startActivity(intent)
+    } else {
+        shareFiles(context, listOf(file))
+    }
 }
 
 @Composable

@@ -2,7 +2,7 @@
 
 ## Visão geral
 
-O projeto foi dividido em módulos para manter o MVP simples, mas já com fronteiras claras entre domínio, dados e interface.
+O projeto foi dividido em módulos para manter o app simples no MVP, mas já com fronteiras claras entre domínio, dados e interface.
 
 ## Módulos
 
@@ -15,13 +15,13 @@ O projeto foi dividido em módulos para manter o MVP simples, mas já com fronte
 - `core-ui`
   Define tema, paleta, tipografia e componentes reutilizáveis de Compose.
 - `feature-home`
-  Entrada do produto com CTA, escolha de modo, importação e lista recente.
+  Entrada do produto com CTA principal de scanner rápido, fallback manual e lista recente.
 - `feature-camera`
-  Captura manual com CameraX e scanner guiado do ML Kit.
+  Captura manual com CameraX.
 - `feature-editor`
   Ajuste de cantos, filtros, rotação e revisão do lote.
 - `feature-export`
-  Seleção de formato/qualidade e geração de arquivos.
+  Seleção de formato/qualidade, geração de arquivos e pós-exportação.
 - `feature-history`
   Histórico pesquisável e detalhe do scan salvo.
 - `feature-settings`
@@ -45,17 +45,26 @@ O projeto foi dividido em módulos para manter o MVP simples, mas já com fronte
 
 ## Pipeline de imagem
 
-O MVP usa duas estratégias:
+O app usa duas estratégias complementares:
 
 - `ML Kit Document Scanner`
-  Fluxo guiado com detecção automática, crop e edição integrada quando disponível.
+  Caminho principal de captura rápida quando disponível, com experiência guiada e menor atrito.
 - Pipeline local em `DefaultDocumentProcessingRepository`
-  Voltado para captura manual/importação, com:
-  - estimação heurística do documento;
+  Voltado para captura manual e importação da galeria, com:
+  - estimativa heurística de quadrilátero por bordas, brilho e amostras laterais;
   - warp de perspectiva com `Matrix.setPolyToPoly`;
-  - normalização de iluminação;
-  - filtros para documento, cinza, colorido e recibo;
-  - limpeza de borda preta e sharpen leve.
+  - normalização local de iluminação;
+  - filtros recalibrados para documento, cinza, colorido e recibo;
+  - prévia em duas etapas com cache;
+  - saída dedicada para OCR e limpeza de borda preta.
+
+## OCR
+
+O OCR local continua em ML Kit Text Recognition, mas a imagem enviada para reconhecimento não depende mais apenas do filtro salvo da página. A `0.2.0` passa a preparar uma versão específica para leitura antes de chamar a engine.
+
+## Exportação
+
+PDF, JPG e PNG continuam sendo gerados localmente. Em Android 10+ a saída vai para `Downloads/Scanora`, enquanto versões anteriores usam o armazenamento do app. A camada de exportação devolve metadados para a UI mostrar nome, tipo, tamanho e local salvo.
 
 ## Dependências principais
 
@@ -72,11 +81,10 @@ O MVP usa duas estratégias:
 ## Rationale técnico
 
 - Sem Hilt no MVP:
-  manual DI reduz atrito inicial e mantém o projeto legível para contribuição.
+  DI manual reduz atrito inicial e mantém o projeto legível para contribuição.
 - Room + DataStore:
   cobertura suficiente para offline-first sem backend.
-- CameraX + ML Kit:
-  atende o requisito de câmera própria e ainda oferece um caminho guiado de melhor UX.
-- Módulos por feature:
-  mantêm o app preparado para crescer sem virar monólito de telas.
-
+- Scanner híbrido:
+  o fluxo rápido cobre a maioria dos casos e o manual segue como fallback editável.
+- Coordenadas normalizadas:
+  simplificam preview, edição manual e reprocessamento em diferentes resoluções.

@@ -209,6 +209,11 @@ fun HomeScreen(
                         ) {
                             Text(text = stringResource(id = R.string.home_import_action))
                         }
+                        Text(
+                            text = stringResource(id = R.string.home_capture_helper),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
             }

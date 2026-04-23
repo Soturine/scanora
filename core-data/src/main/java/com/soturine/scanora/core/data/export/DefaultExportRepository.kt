@@ -1,11 +1,15 @@
 package com.soturine.scanora.core.data.export
 
+import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
 import com.soturine.scanora.core.common.model.ExportedFile
 import com.soturine.scanora.core.common.model.ExportFormat
@@ -13,8 +17,8 @@ import com.soturine.scanora.core.common.model.PdfQuality
 import com.soturine.scanora.core.common.model.ScanDocument
 import com.soturine.scanora.core.common.model.ScanPage
 import com.soturine.scanora.core.common.repository.ExportRepository
+import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -26,12 +30,6 @@ class DefaultExportRepository(
         scan: ScanDocument,
         quality: PdfQuality,
     ): ExportedFile = withContext(Dispatchers.IO) {
-        val exportDir = exportDirectory()
-        val outputFile = File(
-            exportDir,
-            fileNameBuilder.buildBaseName(scan.title, ExportFormat.PDF),
-        )
-
         val document = PdfDocument()
         scan.pages.sortedBy { it.index }.forEachIndexed { pageNumber, page ->
             val bitmap = loadBitmap(page) ?: return@forEachIndexed
@@ -46,35 +44,35 @@ class DefaultExportRepository(
             document.finishPage(pdfPage)
         }
 
-        FileOutputStream(outputFile).use(document::writeTo)
+        val displayName = fileNameBuilder.buildBaseName(scan.title, ExportFormat.PDF)
+        val bytes = ByteArrayOutputStream().use { output ->
+            document.writeTo(output)
+            output.toByteArray()
+        }
         document.close()
-
-        exportedFile(outputFile, ExportFormat.PDF)
+        writeBytes(
+            displayName = displayName,
+            mimeType = ExportFormat.PDF.mimeType,
+            bytes = bytes,
+        )
     }
 
     override suspend fun exportImages(
         scan: ScanDocument,
         format: ExportFormat,
     ): List<ExportedFile> = withContext(Dispatchers.IO) {
-        val exportDir = exportDirectory()
         scan.pages.sortedBy { it.index }.mapNotNull { page ->
             val bitmap = loadBitmap(page) ?: return@mapNotNull null
-            val outputFile = File(
-                exportDir,
-                fileNameBuilder.buildPageName(
-                    title = scan.title,
-                    pageIndex = page.index,
-                    format = format,
-                ),
+            val displayName = fileNameBuilder.buildPageName(
+                title = scan.title,
+                pageIndex = page.index,
+                format = format,
             )
-            FileOutputStream(outputFile).use { stream ->
-                bitmap.compress(
-                    if (format == ExportFormat.PNG) Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG,
-                    92,
-                    stream,
-                )
-            }
-            exportedFile(outputFile, format)
+            writeBytes(
+                displayName = displayName,
+                mimeType = format.mimeType,
+                bytes = bitmapToBytes(bitmap, format),
+            )
         }
     }
 
@@ -82,14 +80,25 @@ class DefaultExportRepository(
         bitmap: Bitmap,
         quality: PdfQuality,
     ): Bitmap {
-        val temp = File.createTempFile("scanora-pdf", ".jpg", context.cacheDir)
-        FileOutputStream(temp).use { stream ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, quality.jpegQuality, stream)
+        val bytes = ByteArrayOutputStream().use { output ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality.jpegQuality, output)
+            output.toByteArray()
         }
-        val compressed = BitmapFactory.decodeFile(temp.absolutePath)
-        temp.delete()
-        return compressed ?: bitmap
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: bitmap
     }
+
+    private fun bitmapToBytes(
+        bitmap: Bitmap,
+        format: ExportFormat,
+    ): ByteArray =
+        ByteArrayOutputStream().use { output ->
+            bitmap.compress(
+                if (format == ExportFormat.PNG) Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG,
+                92,
+                output,
+            )
+            output.toByteArray()
+        }
 
     private fun loadBitmap(page: ScanPage): Bitmap? {
         val uri = Uri.parse(page.displayUri)
@@ -100,24 +109,80 @@ class DefaultExportRepository(
         return stream?.use(BitmapFactory::decodeStream)
     }
 
-    private fun exportDirectory(): File {
-        val baseDir = context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOCUMENTS) ?: context.filesDir
-        return File(baseDir, "exports").apply { mkdirs() }
+    private fun writeBytes(
+        displayName: String,
+        mimeType: String,
+        bytes: ByteArray,
+    ): ExportedFile {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            writeToDownloads(displayName, mimeType, bytes)
+        } else {
+            writeToAppStorage(displayName, mimeType, bytes)
+        }
     }
 
-    private fun exportedFile(
-        file: File,
-        format: ExportFormat,
-    ): ExportedFile =
-        ExportedFile(
-            displayName = file.name,
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun writeToDownloads(
+        displayName: String,
+        mimeType: String,
+        bytes: ByteArray,
+    ): ExportedFile {
+        val resolver = context.contentResolver
+        val relativePath = "${Environment.DIRECTORY_DOWNLOADS}/Scanora"
+        val values = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
+            put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+            put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
+            put(MediaStore.MediaColumns.IS_PENDING, 1)
+        }
+        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+            ?: error("Não foi possível preparar o arquivo para exportação.")
+
+        try {
+            resolver.openOutputStream(uri)?.use { stream ->
+                stream.write(bytes)
+                stream.flush()
+            } ?: error("Não foi possível gravar o arquivo exportado.")
+
+            val publishedValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.IS_PENDING, 0)
+            }
+            resolver.update(uri, publishedValues, null, null)
+        } catch (throwable: Throwable) {
+            resolver.delete(uri, null, null)
+            throw throwable
+        }
+
+        return ExportedFile(
+            displayName = displayName,
+            uri = uri.toString(),
+            mimeType = mimeType,
+            sizeBytes = bytes.size.toLong(),
+            locationLabel = "Downloads > Scanora",
+            pathHint = "Downloads/Scanora/$displayName",
+        )
+    }
+
+    private fun writeToAppStorage(
+        displayName: String,
+        mimeType: String,
+        bytes: ByteArray,
+    ): ExportedFile {
+        val baseDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: context.filesDir
+        val exportDir = File(baseDir, "scanora-exports").apply { mkdirs() }
+        val file = File(exportDir, displayName)
+        file.writeBytes(bytes)
+        return ExportedFile(
+            displayName = displayName,
             uri = FileProvider.getUriForFile(
                 context,
                 "${context.packageName}.fileprovider",
                 file,
             ).toString(),
-            mimeType = format.mimeType,
-            sizeBytes = file.length(),
+            mimeType = mimeType,
+            sizeBytes = bytes.size.toLong(),
+            locationLabel = "Armazenamento do app > scanora-exports",
+            pathHint = file.absolutePath,
         )
+    }
 }
-

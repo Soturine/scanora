@@ -3,11 +3,11 @@
 ![Android](https://img.shields.io/badge/platform-Android-2E7D8C)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-23414B)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-DD8A2E)
-![Version](https://img.shields.io/badge/version-0.1.5-133942)
+![Version](https://img.shields.io/badge/version-0.2.0-133942)
 [![Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml)
 [![Deploy Pages](https://github.com/Soturine/scanora/actions/workflows/pages.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/pages.yml)
 
-Scanora é um app Android de escaneamento de documentos com foco em processamento local, OCR no dispositivo e um fluxo enxuto entre captura, revisão e exportação.
+Scanora é um app Android de digitalização de documentos com foco em processamento local, OCR no dispositivo e um fluxo direto entre captura, revisão e exportação.
 
 Repositório: https://github.com/Soturine/scanora  
 Releases: https://github.com/Soturine/scanora/releases  
@@ -15,21 +15,22 @@ Site: https://soturine.github.io/scanora/
 
 ## O que o app já faz
 
-- scanner rápido com ML Kit Document Scanner direto na Home;
-- captura manual com CameraX como fallback editável;
-- ajuste de corte, correção de perspectiva e filtros para documentos;
-- OCR local com cópia rápida do texto;
-- exportação em PDF, JPG e PNG com compartilhamento nativo;
+- scanner rápido com `ML Kit Document Scanner` direto na Home;
+- captura manual com `CameraX` e importação da galeria como fallback editável;
+- sugestão inicial de crop mais robusta para fotos inclinadas e imagens importadas;
+- filtros locais recalibrados para documento, cinza, cor e recibo;
+- OCR local com imagem preparada especificamente para leitura;
+- exportação em PDF, JPG e PNG com localização do arquivo mais clara;
 - histórico local com título, tags, favoritos e busca.
 
 ## Proposta de valor
 
-Scanora foi pensado para quem quer transformar páginas, contratos e recibos em arquivos legíveis sem depender de upload obrigatório. A proposta é sair do scanner rápido ou do modo manual até o arquivo final com o mínimo de atrito e com privacidade por padrão.
+Scanora foi pensado para transformar páginas, contratos, cadernos e recibos em arquivos legíveis sem depender de upload obrigatório. O scanner rápido virou o caminho principal, mas o fluxo manual continua disponível quando o documento precisa de ajuste fino.
 
 ## Capturas
 
-Capturas reais em breve.  
-O projeto já está validado com build Android, lint e testes unitários no CI.
+Capturas oficiais do app em aparelho real seguem em validação final.  
+Nesta rodada, o material público foi alinhado ao fluxo real do produto sem substituir essa etapa por mockups artificiais.
 
 ## Stack
 
@@ -54,6 +55,7 @@ O projeto já está validado com build Android, lint e testes unitários no CI.
 - `feature-*`: telas e ViewModels por contexto funcional
 
 Referências técnicas:
+
 - [docs/architecture.md](docs/architecture.md)
 - [docs/decisions.md](docs/decisions.md)
 - [docs/setup.md](docs/setup.md)
@@ -68,6 +70,7 @@ Referências técnicas:
 4. Rode `./gradlew assembleDebug` ou execute o módulo `app`.
 
 Identidade do app:
+
 - `applicationId`: `com.soturine.scanora`
 - namespace base: `com.soturine.scanora`
 
@@ -87,7 +90,7 @@ Política completa em [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 ## Status
 
-`0.1.5` transforma o scanner rápido em caminho principal, melhora a fidelidade da prévia de filtros e limpa revisão, exportação e OCR para deixar o MVP mais utilizável de verdade. Ainda faltam capturas reais e QA visual em aparelho para uma release 1.0.
+`0.2.0` consolida o scanner rápido como entrada principal, melhora crop manual/importado, recalibra filtros, prepara melhor a imagem para OCR e deixa a exportação mais clara no aparelho. O próximo passo natural é fechar QA visual em dispositivo e publicar capturas oficiais.
 
 ## Contribuir
 

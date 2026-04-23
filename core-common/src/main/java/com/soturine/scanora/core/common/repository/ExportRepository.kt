@@ -16,4 +16,3 @@ interface ExportRepository {
         format: ExportFormat,
     ): List<ExportedFile>
 }
-

@@ -1,5 +1,6 @@
 package com.soturine.scanora.feature.editor
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -12,7 +13,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -53,10 +56,10 @@ import androidx.compose.ui.unit.dp
 import com.soturine.scanora.core.common.model.DocumentFilterType
 import com.soturine.scanora.core.common.model.DocumentQuad
 import com.soturine.scanora.core.common.model.PointValue
+import com.soturine.scanora.core.common.model.ScanPage
 import com.soturine.scanora.core.ui.component.AsyncUriImage
 import com.soturine.scanora.core.ui.component.EmptyStateCard
 import com.soturine.scanora.core.ui.component.OptionCard
-import com.soturine.scanora.core.ui.component.PageThumbnailCard
 import com.soturine.scanora.core.ui.component.SectionHeader
 import kotlin.math.max
 
@@ -323,7 +326,7 @@ fun FilterScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(372.dp)
+                                    .height(388.dp)
                                     .onSizeChanged { size ->
                                         previewLongSide = max(size.width, size.height).coerceIn(1400, 1800)
                                     },
@@ -403,6 +406,7 @@ fun ReviewScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val orderedPages = remember(scan.pages) { scan.pages.sortedBy { it.index } }
+    val selectedPage = state.currentPage ?: orderedPages.firstOrNull()
     val persistedTags = remember(scan.tags) { scan.tags.joinToString(", ") }
     var title by rememberSaveable(scan.id, scan.title) { mutableStateOf(scan.title) }
     var tags by rememberSaveable(scan.id, persistedTags) { mutableStateOf(persistedTags) }
@@ -453,35 +457,23 @@ fun ReviewScreen(
                         FilledTonalButton(
                             modifier = Modifier.weight(1f),
                             onClick = onOpenCrop,
-                            enabled = state.currentPage != null,
+                            enabled = selectedPage != null,
                         ) {
                             Text(text = stringResource(id = R.string.editor_open_crop))
                         }
                         FilledTonalButton(
                             modifier = Modifier.weight(1f),
                             onClick = onOpenFilters,
-                            enabled = state.currentPage != null,
+                            enabled = selectedPage != null,
                         ) {
                             Text(text = stringResource(id = R.string.editor_open_filters))
                         }
                     }
-                    Row(
+                    Button(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        onClick = onOpenExport,
                     ) {
-                        OutlinedButton(
-                            modifier = Modifier.weight(1f),
-                            onClick = onDeleteCurrentPage,
-                            enabled = state.currentPage != null,
-                        ) {
-                            Text(text = stringResource(id = R.string.editor_delete_page))
-                        }
-                        Button(
-                            modifier = Modifier.weight(1f),
-                            onClick = onOpenExport,
-                        ) {
-                            Text(text = stringResource(id = R.string.editor_open_export))
-                        }
+                        Text(text = stringResource(id = R.string.editor_open_export))
                     }
                 }
             }
@@ -515,11 +507,19 @@ fun ReviewScreen(
                                 orderedPages.size,
                             ),
                         )
-                        Text(
-                            text = stringResource(id = R.string.editor_review_helper),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        if (scan.tags.isNotEmpty()) {
+                            Text(
+                                text = scan.tags.joinToString(separator = " • "),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(id = R.string.editor_review_helper),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }
@@ -560,6 +560,20 @@ fun ReviewScreen(
                     }
                 }
             }
+            if (selectedPage != null) {
+                item {
+                    SelectedPageCard(
+                        page = selectedPage,
+                        pageNumber = selectedPage.index + 1,
+                        canMoveUp = orderedPages.firstOrNull()?.id != selectedPage.id,
+                        canMoveDown = orderedPages.lastOrNull()?.id != selectedPage.id,
+                        onOpenOcr = { onOpenOcr(selectedPage.id) },
+                        onMoveUp = { onMovePageUp(selectedPage.id) },
+                        onMoveDown = { onMovePageDown(selectedPage.id) },
+                        onDelete = onDeleteCurrentPage,
+                    )
+                }
+            }
             item {
                 SectionHeader(
                     eyebrow = stringResource(id = R.string.editor_pages_eyebrow),
@@ -567,58 +581,150 @@ fun ReviewScreen(
                     supportingText = stringResource(id = R.string.editor_pages_supporting),
                 )
             }
-            itemsIndexed(
-                items = orderedPages,
-                key = { _, page -> page.id },
-            ) { index, page ->
-                val selected = state.currentPage?.id == page.id
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    PageThumbnailCard(
-                        title = stringResource(id = R.string.editor_page_title, page.index + 1),
-                        subtitle = if (selected) {
-                            stringResource(id = R.string.editor_page_subtitle_selected, page.filterType.title)
-                        } else {
-                            page.filterType.title
-                        },
-                        imageUri = page.displayUri,
-                        overline = stringResource(id = R.string.editor_page_overline, page.index + 1),
-                        badge = if (selected) {
-                            stringResource(id = R.string.editor_page_selected_badge)
-                        } else {
-                            null
-                        },
-                        selected = selected,
-                        onClick = { onSelectPage(page.id) },
-                    )
-                    if (selected) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            FilledTonalButton(
-                                modifier = Modifier.weight(1f),
-                                onClick = { onOpenOcr(page.id) },
-                            ) {
-                                Text(text = stringResource(id = R.string.editor_open_ocr))
-                            }
-                            OutlinedButton(
-                                modifier = Modifier.weight(1f),
-                                onClick = { onMovePageUp(page.id) },
-                                enabled = index > 0,
-                            ) {
-                                Text(text = stringResource(id = R.string.editor_move_up))
-                            }
-                        }
-                        OutlinedButton(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = { onMovePageDown(page.id) },
-                            enabled = index < orderedPages.lastIndex,
-                        ) {
-                            Text(text = stringResource(id = R.string.editor_move_down))
-                        }
+            item {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    itemsIndexed(
+                        items = orderedPages,
+                        key = { _, page -> page.id },
+                    ) { _, page ->
+                        ReviewPageStripItem(
+                            page = page,
+                            selected = selectedPage?.id == page.id,
+                            onClick = { onSelectPage(page.id) },
+                        )
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SelectedPageCard(
+    page: ScanPage,
+    pageNumber: Int,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
+    onOpenOcr: () -> Unit,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            SectionHeader(
+                eyebrow = stringResource(id = R.string.editor_selected_page_eyebrow),
+                title = stringResource(id = R.string.editor_page_title, pageNumber),
+                supportingText = page.filterType.title,
+            )
+            AsyncUriImage(
+                imageUri = page.displayUri,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(288.dp),
+                contentScale = ContentScale.Fit,
+                maxDimension = 1800,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                FilledTonalButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = onOpenOcr,
+                ) {
+                    Text(text = stringResource(id = R.string.editor_open_ocr))
+                }
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = onDelete,
+                ) {
+                    Text(text = stringResource(id = R.string.editor_delete_page))
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = onMoveUp,
+                    enabled = canMoveUp,
+                ) {
+                    Text(text = stringResource(id = R.string.editor_move_up))
+                }
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = onMoveDown,
+                    enabled = canMoveDown,
+                ) {
+                    Text(text = stringResource(id = R.string.editor_move_down))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewPageStripItem(
+    page: ScanPage,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier
+            .width(148.dp)
+            .border(
+                width = if (selected) 1.5.dp else 1.dp,
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+                } else {
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.8f)
+                },
+                shape = MaterialTheme.shapes.large,
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) {
+                MaterialTheme.colorScheme.surfaceContainerHigh
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
+        ),
+        onClick = onClick,
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            AsyncUriImage(
+                imageUri = page.displayUri,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(148.dp),
+                contentScale = ContentScale.Crop,
+                maxDimension = 1200,
+            )
+            Text(
+                text = stringResource(id = R.string.editor_page_title, page.index + 1),
+                style = MaterialTheme.typography.titleSmall,
+            )
+            Text(
+                text = page.filterType.title,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -735,9 +841,9 @@ private fun defaultQuad(): DocumentQuad =
     )
 
 private fun DocumentFilterType.description(): String = when (this) {
-    DocumentFilterType.ORIGINAL_CORRECTED -> "Mantém as cores do papel com correção de perspectiva e limpeza suave."
-    DocumentFilterType.DOCUMENT_BLACK_WHITE -> "Texto mais firme para impressão, estudo e arquivos simples."
-    DocumentFilterType.DOCUMENT_GRAY -> "Mantém leitura confortável sem lavar o miolo da página."
-    DocumentFilterType.COLOR_ENHANCED -> "Recupera contraste e cor sem exagerar no documento."
-    DocumentFilterType.RECEIPT_HIGH_CONTRAST -> "Focado em recibos, notas térmicas e papéis mais apagados."
+    DocumentFilterType.ORIGINAL_CORRECTED -> "Mantém o papel natural, corrige perspectiva e limpa sem exagero."
+    DocumentFilterType.DOCUMENT_BLACK_WHITE -> "Volta a leitura para texto e impressão sem estourar a página."
+    DocumentFilterType.DOCUMENT_GRAY -> "Preserva conforto visual e miolo da página em tons de cinza úteis."
+    DocumentFilterType.COLOR_ENHANCED -> "Recupera contraste e cor para caderno, marca-texto e caneta."
+    DocumentFilterType.RECEIPT_HIGH_CONTRAST -> "Focado em papéis térmicos, recibos e notas mais apagadas."
 }

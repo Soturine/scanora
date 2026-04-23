@@ -39,15 +39,16 @@ class DefaultOcrRepository(
         val balanced = IntArray(source.size)
 
         for (index in source.indices) {
-            val sourceGray = Color.red(source[index])
-            val shift = ((216 - background[index]) * 0.9f).roundToInt()
-            val corrected = (sourceGray + shift).coerceIn(0, 255)
+            val baseValue = Color.red(source[index])
+            val backgroundGray = background[index].coerceAtLeast(36)
+            val scale = (1f + ((232 - backgroundGray) / 255f) * 0.34f).coerceIn(0.86f, 1.16f)
+            val corrected = (baseValue * scale).roundToInt().coerceIn(0, 255)
             balanced[index] = Color.rgb(corrected, corrected, corrected)
         }
 
         val luma = IntArray(balanced.size) { index -> Color.red(balanced[index]) }
-        val lower = percentile(luma, 0.05f)
-        val upper = percentile(luma, 0.99f).coerceAtLeast(lower + 24)
+        val lower = percentile(luma, 0.06f)
+        val upper = percentile(luma, 0.992f).coerceAtLeast(lower + 24)
         val output = IntArray(balanced.size)
 
         for (index in balanced.indices) {

@@ -4,6 +4,31 @@ Este projeto segue Semantic Versioning e recomenda Conventional Commits no fluxo
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-23
+
+### Added
+
+- Saída dedicada para OCR, com imagem preparada especificamente para leitura antes do reconhecimento local.
+- Metadados de pós-exportação com nome, tipo, tamanho, local salvo e ação direta para abrir o arquivo.
+- Cache leve em memória para previews e thumbnails, reduzindo decodes repetidos nas telas principais.
+
+### Changed
+
+- Heurística inicial de crop do fluxo manual/importado foi refeita para estimar um quadrilátero mais útil a partir de bordas, brilho e amostras laterais da página.
+- Pipeline dos filtros foi recalibrada para separar melhor correção geométrica, normalização de iluminação, contraste e binarização.
+- Tela de revisão foi simplificada para dar foco na página selecionada, nas ações rápidas e na organização do lote.
+- Tela de exportação passou a priorizar escolha de formato, geração clara do arquivo e leitura do resultado salvo no aparelho.
+- Tela de OCR foi reorganizada com preview da entrada preparada, blocos mais legíveis e ação de cópia mais evidente.
+- Home reforça o scanner rápido como caminho recomendado, mantendo modo manual e galeria como fallback.
+
+### Fixed
+
+- Build quebrado por desalinhamento entre contratos de exportação e implementação do `DocumentProcessingRepository`.
+- Exportações em Android 10+ agora vão para `Downloads/Scanora`, deixando o local do arquivo mais previsível.
+- Filtros que lavavam texto, estouravam o papel ou deixavam o cinza artificial em vários casos de documento real.
+- Fluxo de OCR dependente demais do visual salvo da página, o que piorava leitura quando o filtro escolhido não era adequado.
+- Ruído visual na revisão e no pós-export que deixava o fluxo mais pesado do que o necessário.
+
 ## [0.1.5] - 2026-04-22
 
 ### Added
@@ -36,7 +61,7 @@ Este projeto segue Semantic Versioning e recomenda Conventional Commits no fluxo
 
 - `CropScreen` agora mostra a imagem original inteira com `ContentScale.Fit` e overlay alinhado à área real do preview.
 - `FilterScreen` foi reorganizada com `Scaffold`, `TopAppBar` com voltar, preview central mais limpo e CTA fixa no rodapé.
-- Pipeline local de detecção inicial de cantos foi reforçado com suavização de luma, projeção de bordas e limites mais estáveis.
+- Pipeline local de detecção inicial de cantos foi reforçada com suavização de luma, projeção de bordas e limites mais estáveis.
 - Carregamento de imagem assíncrono passou a usar decode em background e amostragem menor para reduzir custo visual.
 
 ### Fixed
