@@ -12,11 +12,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
@@ -36,17 +41,52 @@ fun QuadEditorOverlay(
     val strokeColor = MaterialTheme.colorScheme.tertiary
     val handleFill = MaterialTheme.colorScheme.surface
     val handleStroke = MaterialTheme.colorScheme.primary
+    var activeHandle by remember { mutableStateOf<HandleAnchor?>(null) }
 
     val topLeft = imageBounds.toOffset(quad.topLeft)
     val topRight = imageBounds.toOffset(quad.topRight)
     val bottomRight = imageBounds.toOffset(quad.bottomRight)
     val bottomLeft = imageBounds.toOffset(quad.bottomLeft)
+    val activeOffset = when (activeHandle) {
+        HandleAnchor.TOP_LEFT -> topLeft
+        HandleAnchor.TOP_RIGHT -> topRight
+        HandleAnchor.BOTTOM_RIGHT -> bottomRight
+        HandleAnchor.BOTTOM_LEFT -> bottomLeft
+        null -> null
+    }
 
     Canvas(modifier = modifier.fillMaxSize()) {
+        val dimmedPath = Path().apply {
+            fillType = PathFillType.EvenOdd
+            addRect(imageBounds)
+            moveTo(topLeft.x, topLeft.y)
+            lineTo(topRight.x, topRight.y)
+            lineTo(bottomRight.x, bottomRight.y)
+            lineTo(bottomLeft.x, bottomLeft.y)
+            close()
+        }
+        drawPath(
+            path = dimmedPath,
+            color = Color.Black.copy(alpha = 0.18f),
+        )
         drawLine(strokeColor, topLeft, topRight, strokeWidth = 6f)
         drawLine(strokeColor, topRight, bottomRight, strokeWidth = 6f)
         drawLine(strokeColor, bottomRight, bottomLeft, strokeWidth = 6f)
         drawLine(strokeColor, bottomLeft, topLeft, strokeWidth = 6f)
+        activeOffset?.let { offset ->
+            drawLine(
+                color = strokeColor.copy(alpha = 0.4f),
+                start = Offset(imageBounds.left, offset.y),
+                end = Offset(imageBounds.right, offset.y),
+                strokeWidth = 2.5f,
+            )
+            drawLine(
+                color = strokeColor.copy(alpha = 0.4f),
+                start = Offset(offset.x, imageBounds.top),
+                end = Offset(offset.x, imageBounds.bottom),
+                strokeWidth = 2.5f,
+            )
+        }
         drawCircle(
             color = strokeColor.copy(alpha = 0.2f),
             radius = 18f,
@@ -82,6 +122,10 @@ fun QuadEditorOverlay(
         imageBounds = imageBounds,
         fillColor = handleFill,
         strokeColor = handleStroke,
+        active = activeHandle == HandleAnchor.TOP_LEFT,
+        onDragStateChanged = { isDragging ->
+            activeHandle = if (isDragging) HandleAnchor.TOP_LEFT else null
+        },
         onMoved = { point -> onQuadChange(quad.copy(topLeft = point)) },
     )
     Handle(
@@ -89,6 +133,10 @@ fun QuadEditorOverlay(
         imageBounds = imageBounds,
         fillColor = handleFill,
         strokeColor = handleStroke,
+        active = activeHandle == HandleAnchor.TOP_RIGHT,
+        onDragStateChanged = { isDragging ->
+            activeHandle = if (isDragging) HandleAnchor.TOP_RIGHT else null
+        },
         onMoved = { point -> onQuadChange(quad.copy(topRight = point)) },
     )
     Handle(
@@ -96,6 +144,10 @@ fun QuadEditorOverlay(
         imageBounds = imageBounds,
         fillColor = handleFill,
         strokeColor = handleStroke,
+        active = activeHandle == HandleAnchor.BOTTOM_RIGHT,
+        onDragStateChanged = { isDragging ->
+            activeHandle = if (isDragging) HandleAnchor.BOTTOM_RIGHT else null
+        },
         onMoved = { point -> onQuadChange(quad.copy(bottomRight = point)) },
     )
     Handle(
@@ -103,6 +155,10 @@ fun QuadEditorOverlay(
         imageBounds = imageBounds,
         fillColor = handleFill,
         strokeColor = handleStroke,
+        active = activeHandle == HandleAnchor.BOTTOM_LEFT,
+        onDragStateChanged = { isDragging ->
+            activeHandle = if (isDragging) HandleAnchor.BOTTOM_LEFT else null
+        },
         onMoved = { point -> onQuadChange(quad.copy(bottomLeft = point)) },
     )
 }
@@ -113,10 +169,12 @@ private fun Handle(
     imageBounds: Rect,
     fillColor: Color,
     strokeColor: Color,
+    active: Boolean,
+    onDragStateChanged: (Boolean) -> Unit,
     onMoved: (PointValue) -> Unit,
 ) {
-    val touchTarget = 48.dp
-    val visualSize = 20.dp
+    val touchTarget = 64.dp
+    val visualSize = if (active) 26.dp else 22.dp
     val latestPoint by rememberUpdatedState(point)
 
     Box(
@@ -133,6 +191,13 @@ private fun Handle(
                 detectDragGestures(
                     onDragStart = {
                         currentPoint = latestPoint
+                        onDragStateChanged(true)
+                    },
+                    onDragEnd = {
+                        onDragStateChanged(false)
+                    },
+                    onDragCancel = {
+                        onDragStateChanged(false)
                     },
                 ) { change, dragAmount ->
                     change.consume()
@@ -157,11 +222,18 @@ private fun Handle(
                 .background(fillColor, CircleShape)
                 .border(
                     width = 3.dp,
-                    color = strokeColor,
+                    color = if (active) strokeColor else strokeColor.copy(alpha = 0.82f),
                     shape = CircleShape,
                 ),
         )
     }
+}
+
+private enum class HandleAnchor {
+    TOP_LEFT,
+    TOP_RIGHT,
+    BOTTOM_RIGHT,
+    BOTTOM_LEFT,
 }
 
 private fun Rect.toOffset(point: PointValue): Offset =

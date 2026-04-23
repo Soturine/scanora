@@ -1,5 +1,6 @@
 package com.soturine.scanora.feature.editor
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,13 +54,13 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.alpha
 import com.soturine.scanora.core.common.model.DocumentFilterType
 import com.soturine.scanora.core.common.model.DocumentQuad
 import com.soturine.scanora.core.common.model.PointValue
 import com.soturine.scanora.core.common.model.ScanPage
 import com.soturine.scanora.core.ui.component.AsyncUriImage
 import com.soturine.scanora.core.ui.component.EmptyStateCard
-import com.soturine.scanora.core.ui.component.OptionCard
 import com.soturine.scanora.core.ui.component.SectionHeader
 import kotlin.math.max
 
@@ -70,6 +71,7 @@ fun CropScreen(
     onSaveQuad: (DocumentQuad) -> Unit,
     onContinue: () -> Unit,
     onEnsureQuad: () -> Unit,
+    onReestimate: () -> Unit,
     onBack: () -> Unit,
     onClearMessage: () -> Unit,
     modifier: Modifier = Modifier,
@@ -121,15 +123,27 @@ fun CropScreen(
                         if (state.isProcessing) {
                             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                         }
-                        Button(
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                onSaveQuad(localQuad)
-                                onContinue()
-                            },
-                            enabled = !state.isProcessing,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Text(text = stringResource(id = R.string.editor_save_crop_continue))
+                            FilledTonalButton(
+                                modifier = Modifier.weight(1f),
+                                onClick = onReestimate,
+                                enabled = !state.isProcessing,
+                            ) {
+                                Text(text = stringResource(id = R.string.editor_reestimate_crop))
+                            }
+                            Button(
+                                modifier = Modifier.weight(1f),
+                                onClick = {
+                                    onSaveQuad(localQuad)
+                                    onContinue()
+                                },
+                                enabled = !state.isProcessing,
+                            ) {
+                                Text(text = stringResource(id = R.string.editor_save_crop_continue))
+                            }
                         }
                     }
                 }
@@ -321,12 +335,12 @@ fun FilterScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(388.dp)
+                                    .height(396.dp)
                                     .onSizeChanged { size ->
                                         previewLongSide = max(size.width, size.height).coerceIn(1400, 1800)
                                     },
@@ -347,29 +361,54 @@ fun FilterScreen(
                                     )
                                 }
                             }
-                            if (state.isPreviewRefining && !state.isProcessing) {
-                                Text(
-                                    text = stringResource(id = R.string.editor_filter_preview_refining),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
+                            Text(
+                                text = if (state.isPreviewRefining && !state.isProcessing) {
+                                    stringResource(id = R.string.editor_filter_preview_refining)
+                                } else {
+                                    selectedFilter.description()
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
                     }
                 }
-                itemsIndexed(DocumentFilterType.entries, key = { _, filter -> filter.storageKey }) { _, filter ->
-                    OptionCard(
-                        title = filter.title,
-                        subtitle = filter.description(),
-                        selected = selectedFilter == filter,
-                        badge = if (page.filterType == filter) {
-                            stringResource(id = R.string.editor_filter_current)
-                        } else {
-                            null
-                        },
-                        enabled = !state.isProcessing,
-                        onClick = { selectedFilter = filter },
-                    )
+                item {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        itemsIndexed(DocumentFilterType.entries, key = { _, filter -> filter.storageKey }) { _, filter ->
+                            FilterPresetCard(
+                                title = filter.title,
+                                selected = selectedFilter == filter,
+                                current = page.filterType == filter,
+                                enabled = !state.isProcessing,
+                                onClick = { selectedFilter = filter },
+                            )
+                        }
+                    }
+                }
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                        ),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Text(
+                                text = selectedFilter.title,
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            Text(
+                                text = selectedFilter.description(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -410,6 +449,7 @@ fun ReviewScreen(
     val persistedTags = remember(scan.tags) { scan.tags.joinToString(", ") }
     var title by rememberSaveable(scan.id, scan.title) { mutableStateOf(scan.title) }
     var tags by rememberSaveable(scan.id, persistedTags) { mutableStateOf(persistedTags) }
+    var metadataExpanded by rememberSaveable(scan.id) { mutableStateOf(false) }
     val normalizedTagDraft = remember(tags) {
         tags
             .split(",")
@@ -507,55 +547,63 @@ fun ReviewScreen(
                                 orderedPages.size,
                             ),
                         )
-                        if (scan.tags.isNotEmpty()) {
+                        Text(
+                            text = if (scan.tags.isNotEmpty()) {
+                                scan.tags.joinToString(separator = " • ")
+                            } else {
+                                stringResource(id = R.string.editor_review_helper)
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        OutlinedButton(onClick = { metadataExpanded = !metadataExpanded }) {
                             Text(
-                                text = scan.tags.joinToString(separator = " • "),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        } else {
-                            Text(
-                                text = stringResource(id = R.string.editor_review_helper),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                text = if (metadataExpanded) {
+                                    stringResource(id = R.string.editor_hide_metadata)
+                                } else {
+                                    stringResource(id = R.string.editor_edit_metadata)
+                                },
                             )
                         }
                     }
                 }
             }
             item {
-                Card {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(18.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth(),
-                            value = title,
-                            onValueChange = { title = it },
-                            label = { Text(text = stringResource(id = R.string.editor_document_name)) },
-                            singleLine = true,
-                        )
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth(),
-                            value = tags,
-                            onValueChange = { tags = it },
-                            label = { Text(text = stringResource(id = R.string.editor_tags)) },
-                            supportingText = {
-                                Text(text = stringResource(id = R.string.editor_tags_helper))
-                            },
-                        )
-                        OutlinedButton(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                onRename(title)
-                                onUpdateTags(tags)
-                            },
-                            enabled = hasMetadataChanges,
+                AnimatedVisibility(visible = metadataExpanded || hasMetadataChanges) {
+                    Card {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Text(text = stringResource(id = R.string.editor_save_metadata))
+                            OutlinedTextField(
+                                modifier = Modifier.fillMaxWidth(),
+                                value = title,
+                                onValueChange = { title = it },
+                                label = { Text(text = stringResource(id = R.string.editor_document_name)) },
+                                singleLine = true,
+                            )
+                            OutlinedTextField(
+                                modifier = Modifier.fillMaxWidth(),
+                                value = tags,
+                                onValueChange = { tags = it },
+                                label = { Text(text = stringResource(id = R.string.editor_tags)) },
+                                supportingText = {
+                                    Text(text = stringResource(id = R.string.editor_tags_helper))
+                                },
+                            )
+                            OutlinedButton(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    onRename(title)
+                                    onUpdateTags(tags)
+                                    metadataExpanded = false
+                                },
+                                enabled = hasMetadataChanges,
+                            ) {
+                                Text(text = stringResource(id = R.string.editor_save_metadata))
+                            }
                         }
                     }
                 }
@@ -575,11 +623,20 @@ fun ReviewScreen(
                 }
             }
             item {
-                SectionHeader(
-                    eyebrow = stringResource(id = R.string.editor_pages_eyebrow),
-                    title = stringResource(id = R.string.editor_pages_section),
-                    supportingText = stringResource(id = R.string.editor_pages_supporting),
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.editor_pages_section),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = stringResource(id = R.string.editor_pages_supporting),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -595,6 +652,66 @@ fun ReviewScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun FilterPresetCard(
+    title: String,
+    selected: Boolean,
+    current: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier
+            .width(176.dp)
+            .alpha(if (enabled) 1f else 0.58f)
+            .border(
+                width = if (selected) 1.5.dp else 1.dp,
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                } else {
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+                },
+                shape = MaterialTheme.shapes.large,
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) {
+                MaterialTheme.colorScheme.surfaceContainerHigh
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
+        ),
+        onClick = { if (enabled) onClick() },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = when {
+                    current && selected -> stringResource(id = R.string.editor_filter_selected_current)
+                    current -> stringResource(id = R.string.editor_filter_current)
+                    selected -> stringResource(id = R.string.editor_filter_selected)
+                    else -> stringResource(id = R.string.editor_filter_preview_label)
+                },
+                style = MaterialTheme.typography.labelMedium,
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            )
         }
     }
 }
@@ -713,7 +830,7 @@ private fun ReviewPageStripItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(148.dp),
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.Fit,
                 maxDimension = 1200,
             )
             Text(
@@ -841,9 +958,9 @@ private fun defaultQuad(): DocumentQuad =
     )
 
 private fun DocumentFilterType.description(): String = when (this) {
-    DocumentFilterType.ORIGINAL_CORRECTED -> "Mantém o papel natural, corrige perspectiva e limpa sem exagero."
-    DocumentFilterType.DOCUMENT_BLACK_WHITE -> "Volta a leitura para texto e impressão sem estourar a página."
-    DocumentFilterType.DOCUMENT_GRAY -> "Preserva conforto visual e miolo da página em tons de cinza úteis."
-    DocumentFilterType.COLOR_ENHANCED -> "Recupera contraste e cor para caderno, marca-texto e caneta."
-    DocumentFilterType.RECEIPT_HIGH_CONTRAST -> "Focado em papéis térmicos, recibos e notas mais apagadas."
+    DocumentFilterType.ORIGINAL_CORRECTED -> "Mantém o papel mais natural, corrige a perspectiva e limpa sem exagero."
+    DocumentFilterType.DOCUMENT_BLACK_WHITE -> "Focado em texto e impressão, sem apagar o miolo da página."
+    DocumentFilterType.DOCUMENT_GRAY -> "Deixa a leitura mais confortável sem dar aspecto metálico ao documento."
+    DocumentFilterType.COLOR_ENHANCED -> "Preserva cor, marca-texto e caneta com contraste mais limpo."
+    DocumentFilterType.RECEIPT_HIGH_CONTRAST -> "Focado em recibos, notas térmicas e papéis mais apagados."
 }

@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -54,6 +54,7 @@ fun OcrScreen(
             .map(String::trim)
             .filter(String::isNotBlank)
     }
+    val readableText = remember(paragraphs) { paragraphs.joinToString(separator = "\n\n") }
 
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
@@ -156,35 +157,56 @@ fun OcrScreen(
                     }
                 } else {
                     item {
-                        SectionHeader(
-                            eyebrow = stringResource(id = R.string.ocr_blocks_eyebrow),
-                            title = stringResource(id = R.string.ocr_blocks_title),
-                            supportingText = if (state.isLoading && paragraphs.isEmpty()) {
-                                stringResource(id = R.string.ocr_processing_detail)
-                            } else {
-                                stringResource(id = R.string.ocr_blocks_supporting)
-                            },
-                        )
-                    }
-                    items(paragraphs.ifEmpty { listOf("") }) { paragraph ->
                         Card {
-                            Column(
+                            SelectionContainer {
+                                Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(18.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                if (paragraph.isBlank()) {
+                                ) {
                                     Text(
-                                        text = stringResource(id = R.string.ocr_processing_detail),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        text = stringResource(id = R.string.ocr_blocks_title),
+                                        style = MaterialTheme.typography.titleMedium,
                                     )
-                                } else {
                                     Text(
-                                        text = paragraph,
+                                        text = if (state.isLoading && readableText.isBlank()) {
+                                            stringResource(id = R.string.ocr_processing_detail)
+                                        } else {
+                                            readableText
+                                        },
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    if (!state.isLoading && paragraphs.isNotEmpty()) {
+                        item {
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                                ),
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                ) {
+                                    Text(
+                                        text = stringResource(id = R.string.ocr_blocks_eyebrow),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.primary,
+                                    )
+                                    Text(
+                                        text = stringResource(
+                                            id = R.string.ocr_supporting,
+                                            paragraphs.size,
+                                        ),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
                             }

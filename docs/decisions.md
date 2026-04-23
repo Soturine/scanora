@@ -32,11 +32,11 @@ A prévia de filtros não usa full-res na UI. O editor primeiro renderiza uma im
 
 ## 6. OCR com imagem preparada
 
-O OCR local não depende mais só do filtro final salvo da página. A decisão da `0.2.0` foi criar uma saída dedicada para leitura, reduzindo ruído visual e casos em que o próprio filtro prejudicava a engine.
+O OCR local não depende mais só do filtro final salvo da página. A decisão consolidada até a `0.2.1` foi criar uma saída dedicada para leitura, reduzindo ruído visual e casos em que o próprio filtro prejudicava a engine.
 
 ## 7. Exportação local mais encontrável
 
-PDF, JPG e PNG seguem locais, mas a `0.2.0` passa a usar `Downloads/Scanora` em Android 10+ para resolver o problema prático de “exportei e não achei o arquivo”.
+PDF, JPG e PNG seguem locais, mas a base atual usa `Downloads/Scanora` em Android 10+ para resolver o problema prático de “exportei e não achei o arquivo”.
 
 ## 8. Sem Firebase no MVP
 

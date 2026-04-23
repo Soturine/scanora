@@ -39,7 +39,6 @@ import com.soturine.scanora.core.common.model.ExportFormat
 import com.soturine.scanora.core.common.model.ExportedFile
 import com.soturine.scanora.core.common.model.PdfQuality
 import com.soturine.scanora.core.ui.component.EmptyStateCard
-import com.soturine.scanora.core.ui.component.OptionCard
 import com.soturine.scanora.core.ui.component.SectionHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,7 +101,13 @@ fun ExportScreen(
                             onClick = onExport,
                             enabled = !state.isExporting,
                         ) {
-                            Text(text = stringResource(id = R.string.export_action))
+                            Text(
+                                text = if (state.selectedFormat == ExportFormat.PDF) {
+                                    stringResource(id = R.string.export_action_pdf)
+                                } else {
+                                    stringResource(id = R.string.export_action_images)
+                                },
+                            )
                         }
                         if (state.exportedFiles.isNotEmpty()) {
                             FilledTonalButton(
@@ -161,35 +166,70 @@ fun ExportScreen(
                     }
                 }
                 item {
-                    SectionHeader(
-                        eyebrow = stringResource(id = R.string.export_format_eyebrow),
-                        title = stringResource(id = R.string.export_format_section),
-                        supportingText = stringResource(id = R.string.export_format_supporting),
-                    )
-                }
-                items(ExportFormat.entries, key = { it.storageKey }) { format ->
-                    OptionCard(
-                        title = format.title,
-                        subtitle = format.description(),
-                        selected = state.selectedFormat == format,
-                        onClick = { onSelectFormat(format) },
-                    )
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.export_format_section),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            ExportFormat.entries.forEach { format ->
+                                ExportChoiceButton(
+                                    modifier = Modifier.weight(1f),
+                                    title = format.title,
+                                    selected = state.selectedFormat == format,
+                                    onClick = { onSelectFormat(format) },
+                                )
+                            }
+                        }
+                        Text(
+                            text = state.selectedFormat.description(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
                 if (state.selectedFormat == ExportFormat.PDF) {
                     item {
-                        SectionHeader(
-                            eyebrow = stringResource(id = R.string.export_quality_eyebrow),
-                            title = stringResource(id = R.string.export_quality_section),
-                            supportingText = stringResource(id = R.string.export_quality_supporting),
-                        )
-                    }
-                    items(PdfQuality.entries, key = { it.name }) { quality ->
-                        OptionCard(
-                            title = quality.title,
-                            subtitle = quality.description(),
-                            selected = state.selectedQuality == quality,
-                            onClick = { onSelectQuality(quality) },
-                        )
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                            ),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                Text(
+                                    text = stringResource(id = R.string.export_quality_section),
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    PdfQuality.entries.forEach { quality ->
+                                        ExportChoiceButton(
+                                            modifier = Modifier.weight(1f),
+                                            title = quality.title,
+                                            selected = state.selectedQuality == quality,
+                                            onClick = { onSelectQuality(quality) },
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = state.selectedQuality.description(),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
                 }
                 if (state.exportedFiles.isNotEmpty()) {
@@ -209,18 +249,65 @@ fun ExportScreen(
                                         state.exportedFiles.size,
                                     ),
                                 )
-                                state.exportedFiles.forEach { file ->
-                                    ExportedFileCard(
-                                        file = file,
-                                        onOpen = { onOpenFile(file) },
-                                    )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    FilledTonalButton(
+                                        modifier = Modifier.weight(1f),
+                                        onClick = { onShare(state.exportedFiles) },
+                                    ) {
+                                        Text(text = stringResource(id = R.string.export_share_action))
+                                    }
+                                    FilledTonalButton(
+                                        modifier = Modifier.weight(1f),
+                                        onClick = { onOpenFile(state.exportedFiles.first()) },
+                                    ) {
+                                        Text(text = stringResource(id = R.string.export_open_file_action))
+                                    }
                                 }
                             }
                         }
                     }
+                    items(state.exportedFiles, key = { it.uri }) { file ->
+                        ExportedFileCard(
+                            file = file,
+                            onOpen = { onOpenFile(file) },
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ExportChoiceButton(
+    title: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val containerColor = if (selected) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    val contentColor = if (selected) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    FilledTonalButton(
+        modifier = modifier,
+        onClick = onClick,
+        colors = androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
+            containerColor = containerColor,
+            contentColor = contentColor,
+        ),
+    ) {
+        Text(text = title)
     }
 }
 
@@ -290,7 +377,7 @@ private fun ExportedFileCard(
 }
 
 private fun ExportFormat.description(): String = when (this) {
-    ExportFormat.PDF -> "Melhor para enviar ou arquivar o lote inteiro em um único documento."
+    ExportFormat.PDF -> "Reúne o lote inteiro em um arquivo só, pronto para enviar ou arquivar."
     ExportFormat.JPG -> "Salva cada página como imagem leve e fácil de compartilhar."
     ExportFormat.PNG -> "Mantém mais detalhe por página quando a saída precisa ficar em imagem."
 }

@@ -104,7 +104,32 @@ Este roadmap prioriza estabilidade, usabilidade e qualidade real do fluxo de esc
 
 ---
 
-## Depois da v0.2.0
+## v0.2.1 — Menos Ruído, Mais Confiança
+
+**Status:** concluída em 2026-04-23
+
+**Objetivo:** endurecer o fluxo manual/importado, deixar os filtros menos destrutivos e reduzir o peso visual das telas que ainda pareciam MVP configurável.
+
+### Entregue
+
+- auto crop manual/importado agora compara mais candidatos antes de escolher o quadrilátero inicial;
+- heurísticas de borda ficaram mais centradas na área útil da página, com menos influência de ruído nas extremidades;
+- editor ganhou botão de reajuste automático, overlay mais claro e handles mais confortáveis;
+- filtros foram recalibrados de novo para preservar melhor páginas pautadas, manuscrito e contraste de estudo;
+- revisão passou a esconder nome e tags até o momento em que o usuário realmente quiser editar;
+- exportação ficou mais dependente da escolha principal, com menos opções simultâneas e pós-export mais direto;
+- OCR foi reorganizado para leitura contínua e cópia mais rápida.
+
+### Resultado esperado desta release
+
+- o fluxo manual fica mais confiável como fallback real quando o scanner rápido não basta;
+- filtros deixam de piorar documentos em mais casos práticos de galeria e caderno;
+- revisão, OCR e exportação passam menos sensação de tela pesada e mais de ferramenta rápida;
+- o app se aproxima mais de um scanner utilizável no dia a dia sem inflar a arquitetura.
+
+---
+
+## Depois da v0.2.1
 
 ### Candidatos para uma fase futura
 

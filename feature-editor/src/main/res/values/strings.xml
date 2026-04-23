@@ -6,16 +6,20 @@
     <string name="editor_crop_title">Ajustar corte</string>
     <string name="editor_crop_eyebrow">Corte manual</string>
     <string name="editor_crop_heading">Enquadre a página inteira</string>
-    <string name="editor_crop_helper">A sugestão inicial tenta chegar perto. Se faltar precisão, arraste os quatro cantos até fechar a área útil do documento.</string>
-    <string name="editor_crop_caption">O corte usa a imagem original e um overlay alinhado ao preview inteiro para manter o ajuste estável.</string>
+    <string name="editor_crop_helper">O ajuste automático serve como ponto de partida. Se precisar, arraste os quatro cantos até fechar a área útil da página.</string>
+    <string name="editor_crop_caption">Arraste um canto por vez. Se o palpite inicial vier ruim, use &quot;Reajustar automaticamente&quot;.</string>
     <string name="editor_crop_detecting">Buscando os cantos do documento…</string>
+    <string name="editor_reestimate_crop">Reajustar automaticamente</string>
     <string name="editor_save_crop_continue">Salvar corte e seguir</string>
 
     <string name="editor_filter_title">Filtros</string>
     <string name="editor_filter_eyebrow">Visual final</string>
     <string name="editor_filter_heading">Escolha o acabamento da página</string>
-    <string name="editor_filter_helper">A prévia aparece rápido e é refinada em segundo plano para ficar mais próxima do resultado final.</string>
+    <string name="editor_filter_helper">A prévia abre rápido e melhora em segundo plano. O arquivo final continua sendo gerado fora da interface.</string>
     <string name="editor_filter_current">Atual</string>
+    <string name="editor_filter_selected">Selecionado</string>
+    <string name="editor_filter_selected_current">Selecionado agora</string>
+    <string name="editor_filter_preview_label">Toque para testar</string>
     <string name="editor_filter_preview_loading">Atualizando a prévia…</string>
     <string name="editor_filter_preview_refining">Refinando a prévia com mais nitidez…</string>
     <string name="editor_filter_applying">Aplicando visual na página…</string>
@@ -26,7 +30,7 @@
     <string name="editor_review_title">Revisão</string>
     <string name="editor_review_eyebrow">Lote em revisão</string>
     <string name="editor_review_summary">%1$d página(s) prontas para revisar, organizar e exportar.</string>
-    <string name="editor_review_helper">Adicione um nome e siga para exportação quando tudo estiver pronto.</string>
+    <string name="editor_review_helper">Defina um nome só quando quiser organizar melhor o histórico.</string>
     <string name="editor_selected_page_eyebrow">Página em foco</string>
 
     <string name="editor_missing_page_title">Página indisponível</string>
@@ -34,12 +38,14 @@
 
     <string name="editor_document_name">Nome do documento</string>
     <string name="editor_tags">Tags</string>
-    <string name="editor_tags_helper">Separe as tags com vírgula para organizar o histórico.</string>
+    <string name="editor_tags_helper">Separe com vírgula para organizar o histórico depois.</string>
+    <string name="editor_edit_metadata">Editar nome e tags</string>
+    <string name="editor_hide_metadata">Fechar detalhes</string>
     <string name="editor_save_metadata">Salvar informações</string>
 
     <string name="editor_pages_eyebrow">Páginas</string>
-    <string name="editor_pages_section">Escolha a página que vai ao foco</string>
-    <string name="editor_pages_supporting">Toque em uma miniatura para abrir aquela página no painel principal.</string>
+    <string name="editor_pages_section">Páginas do lote</string>
+    <string name="editor_pages_supporting">Toque em uma miniatura para trocar a página em foco.</string>
     <string name="editor_open_crop">Ajustar corte</string>
     <string name="editor_open_filters">Refinar visual</string>
     <string name="editor_delete_page">Excluir página</string>

@@ -4,6 +4,28 @@ Este projeto segue Semantic Versioning e recomenda Conventional Commits no fluxo
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-04-23
+
+### Added
+
+- Botão de reajuste automático no crop manual, mantendo o editor como fallback confortável quando o primeiro palpite não basta.
+- Overlay de corte com área externa suavemente escurecida, guias durante o arraste e handles maiores para ajuste mais preciso.
+
+### Changed
+
+- Heurística de auto crop do fluxo manual/importado passou a reavaliar múltiplos candidatos, com score por contraste, borda, centralidade e geometria antes de escolher o quadrilátero inicial.
+- Filtros locais foram recalibrados outra vez para documento real, com menos branco estourado, menos cinza metálico e melhor preservação de miolo manuscrito e pautado.
+- Revisão do lote adotou disclosure progressivo para nome e tags, reduzindo peso visual e mantendo foco em páginas e ações principais.
+- Exportação foi simplificada para mostrar primeiro o formato, depois as opções dependentes dele, com CTA mais direta e sucesso mais fácil de entender.
+- Tela de OCR passou a priorizar leitura contínua e cópia rápida em vez de espalhar o texto em vários blocos pesados.
+
+### Fixed
+
+- Palpites iniciais excessivamente abertos ou pouco confiáveis em fotos inclinadas, importações da galeria e fundos mais poluídos.
+- Sensação de editor carregado demais por texto, cards longos e metadados sempre expostos na revisão.
+- Fluxo de exportação com opções demais ao mesmo tempo e pouca clareza entre gerar, abrir e compartilhar.
+- Casos em que a prévia de filtro ficava mais fraca do que precisava no uso real, especialmente em documentos de estudo e caderno.
+
 ## [0.2.0] - 2026-04-23
 
 ### Added

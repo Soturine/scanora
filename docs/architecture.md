@@ -60,7 +60,7 @@ O app usa duas estratégias complementares:
 
 ## OCR
 
-O OCR local continua em ML Kit Text Recognition, mas a imagem enviada para reconhecimento não depende mais apenas do filtro salvo da página. A `0.2.0` passa a preparar uma versão específica para leitura antes de chamar a engine.
+O OCR local continua em ML Kit Text Recognition, mas a imagem enviada para reconhecimento não depende mais apenas do filtro salvo da página. A base consolidada até a `0.2.1` prepara uma versão específica para leitura antes de chamar a engine.
 
 ## Exportação
 

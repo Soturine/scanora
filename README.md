@@ -3,7 +3,7 @@
 ![Android](https://img.shields.io/badge/platform-Android-2E7D8C)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-23414B)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-DD8A2E)
-![Version](https://img.shields.io/badge/version-0.2.0-133942)
+![Version](https://img.shields.io/badge/version-0.2.1-133942)
 [![Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml)
 [![Deploy Pages](https://github.com/Soturine/scanora/actions/workflows/pages.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/pages.yml)
 
@@ -17,10 +17,11 @@ Site: https://soturine.github.io/scanora/
 
 - scanner rápido com `ML Kit Document Scanner` direto na Home;
 - captura manual com `CameraX` e importação da galeria como fallback editável;
-- sugestão inicial de crop mais robusta para fotos inclinadas e imagens importadas;
-- filtros locais recalibrados para documento, cinza, cor e recibo;
+- sugestão inicial de crop mais robusta para fotos inclinadas, galeria e fundos poluídos;
+- reajuste automático do crop e editor manual mais confortável para acertos finos;
+- filtros locais recalibrados para documento, cinza, cor e recibo com menos risco de estourar a página;
 - OCR local com imagem preparada especificamente para leitura;
-- exportação em PDF, JPG e PNG com localização do arquivo mais clara;
+- exportação em PDF, JPG e PNG com escolhas mais diretas e localização do arquivo mais clara;
 - histórico local com título, tags, favoritos e busca.
 
 ## Proposta de valor
@@ -90,7 +91,7 @@ Política completa em [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 ## Status
 
-`0.2.0` consolida o scanner rápido como entrada principal, melhora crop manual/importado, recalibra filtros, prepara melhor a imagem para OCR e deixa a exportação mais clara no aparelho. O próximo passo natural é fechar QA visual em dispositivo e publicar capturas oficiais.
+`0.2.1` endurece o fallback manual/importado com auto crop mais estável, filtros menos destrutivos, revisão mais limpa, OCR mais legível e exportação menos poluída. O próximo passo natural continua sendo fechar QA visual em dispositivo e publicar capturas oficiais.
 
 ## Contribuir
 

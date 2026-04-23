@@ -131,6 +131,10 @@ class EditorViewModel(
         }
     }
 
+    fun reestimateCurrentPageQuad() {
+        ensureQuadForCurrentPage(force = true)
+    }
+
     fun prepareFilterPreview(
         filterType: DocumentFilterType,
         previewLongSide: Int,
@@ -139,7 +143,7 @@ class EditorViewModel(
         previewJob?.cancel()
 
         val targetDimension = previewLongSide.coerceIn(1400, 1800)
-        val quickDimension = (targetDimension * 0.68f).toInt().coerceIn(960, 1280)
+        val quickDimension = (targetDimension * 0.74f).toInt().coerceIn(1120, 1400)
         val currentDisplayUri = page.displayUri
 
         if (filterType == page.filterType && page.processedUri != null) {

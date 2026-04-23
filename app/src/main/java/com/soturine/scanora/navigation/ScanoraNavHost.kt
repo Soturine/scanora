@@ -182,6 +182,7 @@ fun ScanoraNavHost(
                     navController.navigate(ScanoraDestinations.filters(scanId, pageId))
                 },
                 onEnsureQuad = editorViewModel::ensureQuadForCurrentPage,
+                onReestimate = editorViewModel::reestimateCurrentPageQuad,
                 onBack = { navController.popBackStack() },
                 onClearMessage = editorViewModel::clearMessage,
             )

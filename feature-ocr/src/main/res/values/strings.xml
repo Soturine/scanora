@@ -6,14 +6,14 @@
     <string name="ocr_missing_title">Página indisponível</string>
     <string name="ocr_missing_message">Abra uma página válida para reconhecer texto.</string>
     <string name="ocr_processing">Preparando leitura local…</string>
-    <string name="ocr_processing_detail">A entrada está sendo tratada para leitura local. O texto aparece aqui assim que o reconhecimento terminar.</string>
+    <string name="ocr_processing_detail">A imagem está sendo preparada para leitura local. O texto aparece aqui assim que o reconhecimento terminar.</string>
     <string name="ocr_result_title">Texto reconhecido</string>
     <string name="ocr_supporting">%1$d bloco(s) de texto organizados a partir da página corrigida.</string>
     <string name="ocr_empty_title">Ainda não encontramos texto útil</string>
     <string name="ocr_empty_text">O OCR local não encontrou texto aproveitável nessa página. Vale ajustar o corte ou tentar novamente.</string>
     <string name="ocr_copy">Copiar texto</string>
     <string name="ocr_retry">Ler novamente</string>
-    <string name="ocr_blocks_eyebrow">Saída organizada</string>
-    <string name="ocr_blocks_title">Blocos reconhecidos</string>
-    <string name="ocr_blocks_supporting">Revise os blocos abaixo e copie o texto quando o resultado estiver útil.</string>
+    <string name="ocr_blocks_eyebrow">Leitura pronta</string>
+    <string name="ocr_blocks_title">Texto organizado</string>
+    <string name="ocr_blocks_supporting">Revise o texto abaixo e copie quando o resultado estiver útil.</string>
 </resources>
