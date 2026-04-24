@@ -4,6 +4,28 @@ Este projeto segue Semantic Versioning e recomenda Conventional Commits no fluxo
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-04-24
+
+### Added
+
+- `escopo.md` na raiz como referência principal de produto para a fase atual.
+- Cópia estável das imagens de entrada para armazenamento interno antes de criar lotes locais.
+- Feedback curto ao concluir exportação e ao copiar texto do OCR.
+
+### Changed
+
+- Home passou a concentrar o topo em `Escanear rápido`, mantendo manual/importação direta em uma área secundária de ajuste manual.
+- Fluxo manual deixou de oferecer atalho concorrente para o scanner guiado dentro da tela de CameraX.
+- Lotes criados pela entrada rápida, câmera manual e importação direta agora recebem títulos com origem clara.
+- OCR foi reorganizado com `Copiar tudo` no rodapé e blocos de texto separados para leitura.
+- Documentação pública foi alinhada à decisão de manter o scanner do Google como fluxo principal.
+
+### Fixed
+
+- Dependência de URIs temporárias retornadas por scanner, galeria ou câmera antes de preview, filtros, OCR e exportação.
+- Sensação de que o fluxo manual competia com o caminho rápido na Home.
+- Falta de feedback curto após exportar arquivos ou copiar OCR.
+
 ## [0.2.1] - 2026-04-23
 
 ### Added

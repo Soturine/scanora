@@ -11,20 +11,25 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.DocumentScanner
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +38,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -50,7 +54,6 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import com.soturine.scanora.core.common.model.ScanMode
 import com.soturine.scanora.core.common.usecase.FormatScanDateUseCase
 import com.soturine.scanora.core.ui.component.EmptyStateCard
-import com.soturine.scanora.core.ui.component.ModeCard
 import com.soturine.scanora.core.ui.component.PageThumbnailCard
 import com.soturine.scanora.core.ui.component.SectionHeader
 import kotlinx.coroutines.launch
@@ -75,11 +78,6 @@ fun HomeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val dateFormatter = remember { FormatScanDateUseCase() }
     val quickScanUnavailableMessage = stringResource(id = R.string.home_quick_scan_unavailable)
-    val heroChips = listOf(
-        stringResource(id = R.string.home_chip_local),
-        stringResource(id = R.string.home_chip_ocr),
-        stringResource(id = R.string.home_chip_export),
-    )
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 12),
     ) { uris: List<Uri> ->
@@ -144,21 +142,6 @@ fun HomeScreen(
                             title = stringResource(id = R.string.home_hero_title),
                             supportingText = stringResource(id = R.string.home_hero_subtitle),
                         )
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(heroChips) { chip ->
-                                Surface(
-                                    color = MaterialTheme.colorScheme.surface,
-                                    shape = MaterialTheme.shapes.small,
-                                ) {
-                                    Text(
-                                        text = chip,
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            }
-                        }
                         Button(
                             modifier = Modifier.fillMaxWidth(),
                             onClick = {
@@ -191,12 +174,57 @@ fun HomeScreen(
                                     }
                             },
                         ) {
+                            Icon(
+                                imageVector = Icons.Outlined.DocumentScanner,
+                                contentDescription = null,
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
                             Text(text = stringResource(id = R.string.home_quick_scan_action))
                         }
-                        FilledTonalButton(
+                        Text(
+                            text = stringResource(id = R.string.home_quick_scan_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    ),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        SectionHeader(
+                            eyebrow = stringResource(id = R.string.home_fallback_eyebrow),
+                            title = stringResource(id = R.string.home_fallback_title),
+                            supportingText = stringResource(id = R.string.home_fallback_supporting),
+                        )
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(ScanMode.entries, key = { it.storageKey }) { mode ->
+                                FilterChip(
+                                    selected = state.selectedMode == mode,
+                                    onClick = { onModeSelected(mode) },
+                                    label = { Text(text = mode.title) },
+                                )
+                            }
+                        }
+                        OutlinedButton(
                             modifier = Modifier.fillMaxWidth(),
                             onClick = { onOpenManualCamera(state.selectedMode) },
                         ) {
+                            Icon(
+                                imageVector = Icons.Outlined.CameraAlt,
+                                contentDescription = null,
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
                             Text(text = stringResource(id = R.string.home_manual_scan_action))
                         }
                         OutlinedButton(
@@ -207,33 +235,13 @@ fun HomeScreen(
                                 )
                             },
                         ) {
+                            Icon(
+                                imageVector = Icons.Outlined.PhotoLibrary,
+                                contentDescription = null,
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
                             Text(text = stringResource(id = R.string.home_import_action))
                         }
-                        Text(
-                            text = stringResource(id = R.string.home_capture_helper),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-
-            item {
-                SectionHeader(
-                    eyebrow = stringResource(id = R.string.home_mode_eyebrow),
-                    title = stringResource(id = R.string.home_mode_section),
-                    supportingText = stringResource(id = R.string.home_mode_supporting),
-                )
-            }
-
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ScanMode.entries.forEach { mode ->
-                        ModeCard(
-                            mode = mode,
-                            selected = state.selectedMode == mode,
-                            onClick = { onModeSelected(mode) },
-                        )
                     }
                 }
             }

@@ -1,9 +1,11 @@
 package com.soturine.scanora.navigation
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -38,11 +40,14 @@ import com.soturine.scanora.feature.settings.AboutScreen
 import com.soturine.scanora.feature.settings.SettingsScreen
 import com.soturine.scanora.feature.settings.SettingsViewModel
 import com.soturine.scanora.onboarding.OnboardingScreen
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.withContext
 
 @Composable
 fun ScanoraNavHost(
@@ -86,9 +91,11 @@ fun ScanoraNavHost(
                 onStartQuickScan = { mode, uris ->
                     coroutineScope.launch {
                         createDraftScan(
+                            context = context,
                             container = container,
                             mode = mode,
                             uris = uris,
+                            source = DraftSource.QUICK_SCAN,
                         )?.let { (scanId, _) ->
                             navController.navigate(ScanoraDestinations.review(scanId))
                         }
@@ -100,9 +107,11 @@ fun ScanoraNavHost(
                 onImportImages = { mode, uris ->
                     coroutineScope.launch {
                         createDraftScan(
+                            context = context,
                             container = container,
                             mode = mode,
                             uris = uris,
+                            source = DraftSource.MANUAL_IMPORT,
                         )?.let { (scanId, pageId) ->
                             navController.navigate(ScanoraDestinations.crop(scanId, pageId))
                         }
@@ -132,20 +141,11 @@ fun ScanoraNavHost(
                 onCapturedImage = { uri ->
                     coroutineScope.launch {
                         createDraftScan(
+                            context = context,
                             container = container,
                             mode = mode,
                             uris = listOf(uri),
-                        )?.let { (scanId, pageId) ->
-                            navController.navigate(ScanoraDestinations.crop(scanId, pageId))
-                        }
-                    }
-                },
-                onCapturedBatch = { uris ->
-                    coroutineScope.launch {
-                        createDraftScan(
-                            container = container,
-                            mode = mode,
-                            uris = uris,
+                            source = DraftSource.MANUAL_CAMERA,
                         )?.let { (scanId, pageId) ->
                             navController.navigate(ScanoraDestinations.crop(scanId, pageId))
                         }
@@ -371,21 +371,83 @@ fun ScanoraNavHost(
     }
 }
 
+private enum class DraftSource(
+    val titlePrefix: String,
+) {
+    QUICK_SCAN("Scan rápido"),
+    MANUAL_CAMERA("Modo manual"),
+    MANUAL_IMPORT("Importação manual"),
+}
+
 private suspend fun createDraftScan(
+    context: Context,
     container: AppContainer,
     mode: ScanMode,
     uris: List<String>,
+    source: DraftSource,
 ): Pair<String, String>? {
     if (uris.isEmpty()) return null
+    val stableUris = persistSourceUris(context, uris)
+    if (stableUris.isEmpty()) return null
     val formatter = SimpleDateFormat("dd MMM yyyy HH:mm", Locale("pt", "BR"))
-    val title = "Scan ${formatter.format(Date())}"
+    val title = "${source.titlePrefix} ${formatter.format(Date())}"
     val scanId = container.scanRepository.createScan(
         title = title,
         mode = mode,
-        sourceUris = uris,
+        sourceUris = stableUris,
     )
     val firstPageId = container.scanRepository.getScan(scanId)?.pages?.minByOrNull { it.index }?.id ?: return null
     return scanId to firstPageId
+}
+
+private suspend fun persistSourceUris(
+    context: Context,
+    uris: List<String>,
+): List<String> = withContext(Dispatchers.IO) {
+    val directory = File(context.filesDir, "scan-sources").apply { mkdirs() }
+    uris.mapIndexedNotNull { index, uriValue ->
+        runCatching {
+            val sourceUri = Uri.parse(uriValue)
+            val extension = sourceUri.guessImageExtension(context, uriValue)
+            val file = File(
+                directory,
+                "source-${System.currentTimeMillis()}-$index-${UUID.randomUUID()}.$extension",
+            )
+            openSourceInputStream(context, sourceUri, uriValue)?.use { input ->
+                file.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            } ?: return@mapIndexedNotNull null
+            file.absolutePath
+        }.getOrNull()
+    }
+}
+
+private fun openSourceInputStream(
+    context: Context,
+    uri: Uri,
+    rawValue: String,
+) = when {
+    uri.scheme.isNullOrBlank() -> File(rawValue).inputStream()
+    uri.scheme == "file" -> File(uri.path.orEmpty()).inputStream()
+    else -> context.contentResolver.openInputStream(uri)
+}
+
+private fun Uri.guessImageExtension(
+    context: Context,
+    rawValue: String,
+): String {
+    val mimeType = runCatching { context.contentResolver.getType(this) }.getOrNull()
+    return when (mimeType) {
+        "image/png" -> "png"
+        "image/webp" -> "webp"
+        "image/heic" -> "heic"
+        "image/heif" -> "heif"
+        else -> File(path ?: rawValue).extension
+            .lowercase(Locale.ROOT)
+            .takeIf { it in setOf("jpg", "jpeg", "png", "webp", "heic", "heif") }
+            ?: "jpg"
+    }
 }
 
 private fun shareFiles(

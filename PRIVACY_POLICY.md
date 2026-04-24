@@ -19,7 +19,8 @@ O app pode processar localmente:
 
 No MVP atual:
 
-- histórico, metadados e referências de páginas ficam no armazenamento local do app;
+- histórico, metadados e cópias locais das páginas ficam no armazenamento local do app;
+- imagens recebidas de scanner, galeria ou câmera podem ser copiadas para armazenamento interno para evitar dependência de URIs temporárias;
 - arquivos exportados são gerados localmente no dispositivo;
 - arquivos temporários de processamento podem existir no cache do app por tempo limitado;
 - uma rotina leve com `WorkManager` remove arquivos antigos de cache/exportação temporária.
@@ -52,4 +53,3 @@ Importação pela galeria usa o seletor moderno do Android/ML Kit quando aplicá
 ## Mudanças futuras
 
 Caso integrações futuras sejam adicionadas, como sync opcional, backup remoto ou analytics, esta política deverá ser atualizada antes da publicação da mudança.
-

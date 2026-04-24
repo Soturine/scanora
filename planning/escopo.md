@@ -1,149 +1,66 @@
 # Escopo do Projeto
 
+O escopo operacional vigente fica em [`../escopo.md`](../escopo.md). Este arquivo em `planning/` mantém a visão estratégica do produto alinhada com a versão atual.
+
 ## Visão geral
 
-`Scanora` é um aplicativo Android de escaneamento de documentos com foco em uso local, privacidade e fluxo rápido de captura, revisão e exportação. O projeto foi estruturado como um MVP sólido, modular e pronto para evolução.
+`Scanora` é um aplicativo Android de escaneamento de documentos com foco em privacidade, processamento local, OCR no dispositivo, revisão rápida e exportação simples.
 
 Identidade técnica atual:
 
 - Nome do app: `Scanora`
 - Package base: `com.soturine.scanora`
-- Stack principal: Kotlin, Jetpack Compose, Material 3, CameraX, ML Kit, Room, DataStore, Navigation Compose, WorkManager
+- Stack principal: Kotlin, Jetpack Compose, Material 3, CameraX, ML Kit Document Scanner, ML Kit Text Recognition, Room, DataStore, Navigation Compose e WorkManager
 
-## Objetivo do produto
+## Direção de produto
 
-O app deve permitir que a pessoa usuária:
+A partir da `v0.2.2`, o produto assume uma decisão clara:
 
-- capture documentos pela câmera;
-- importe imagens da galeria;
-- detecte automaticamente o documento;
-- ajuste manualmente os quatro cantos quando necessário;
-- corrija perspectiva;
-- aplique filtros voltados para legibilidade;
-- gere PDF com múltiplas páginas;
-- exporte imagens em JPG e PNG;
-- compartilhe arquivos;
-- organize scans localmente;
-- pesquise documentos por título;
-- execute OCR local com cópia rápida do texto.
+- `Escanear rápido` com `GmsDocumentScanner` é o fluxo principal;
+- galeria/importação deve passar pelo scanner do Google quando houver suporte;
+- captura manual e importação direta continuam como fallback editável;
+- o valor do app está em lote local, revisão, ajuste fino, OCR, histórico e exportação sem atrito.
 
-## Diferenciais do MVP
+## Fluxo principal
 
-O produto se diferencia por uma abordagem offline-first e por modos de captura orientados ao contexto:
+1. Abrir a Home.
+2. Tocar em `Escanear rápido`.
+3. Capturar ou importar pelo scanner do Google.
+4. Copiar as imagens retornadas para armazenamento interno estável.
+5. Criar lote local no Room.
+6. Abrir direto em revisão.
+7. Ajustar corte/filtro apenas quando necessário.
+8. Rodar OCR ou exportar em PDF, JPG ou PNG.
 
-- `Caderno / Faculdade`
-- `Documento / Contrato`
-- `Recibo / Nota`
+## Fallback manual
 
-Também fazem parte do escopo:
+O fallback manual existe para cenários em que o scanner rápido não basta:
 
-- tags locais;
-- histórico de scans;
-- favoritos;
-- modo escuro;
-- onboarding curto;
-- interface em português do Brasil;
-- documentação pública e técnica preparada para manutenção open-source.
+- foto difícil;
+- página de caderno;
+- manuscrito;
+- fundo poluído;
+- necessidade de controlar os quatro cantos;
+- importação direta de imagem para ajuste manual.
 
-## Diretrizes técnicas
+Esse caminho deve ser apresentado como `Ajuste manual` ou `Modo manual`, sem competir visualmente com o CTA principal.
 
-Decisões obrigatórias para a base do projeto:
+## Princípios técnicos
 
-- arquitetura modular, mas sem modularização excessiva para o MVP;
-- separação clara entre UI, domínio e dados;
-- ViewModels com `StateFlow`;
-- persistência local com Room;
-- preferências com DataStore;
-- exportação local de PDF e imagens;
-- OCR local com ML Kit;
-- tarefas leves de manutenção com WorkManager;
-- testes unitários nas partes centrais do domínio e da exportação;
-- CI Android com build, lint e testes.
+- Não reescrever o app do zero.
+- Preservar a modularização atual.
+- Não adicionar backend.
+- Não introduzir biblioteca pesada sem necessidade clara.
+- Manter processamento de bitmap fora da main thread.
+- Usar prévias em resolução intermediária na UI.
+- Usar imagem estável em armazenamento interno para preview, filtros, OCR e exportação.
 
-## Pipeline de processamento de imagem
-
-O pipeline deve priorizar aparência de scanner real e legibilidade para OCR:
-
-1. captura ou importação da imagem;
-2. estimativa automática do documento;
-3. ajuste manual dos cantos, quando necessário;
-4. correção de perspectiva;
-5. redução básica de ruído e sombras;
-6. melhoria de contraste;
-7. filtros voltados a documento;
-8. exportação e OCR sobre a imagem tratada.
-
-Filtros mínimos previstos:
-
-- Original corrigido
-- Documento P&B
-- Documento cinza
-- Colorido aprimorado
-- Recibo / Alto contraste
-
-## Escopo funcional
-
-Telas do MVP:
-
-1. Splash
-2. Onboarding
-3. Home
-4. Captura por câmera
-5. Importação da galeria
-6. Ajuste e crop
-7. Filtros
-8. Revisão de páginas
-9. Exportação
-10. Histórico
-11. Detalhe do scan
-12. Configurações
-13. OCR
-14. Sobre
-
-Fluxos mínimos:
-
-- abrir a câmera;
-- capturar ou importar;
-- revisar o recorte;
-- aplicar filtro;
-- reordenar páginas;
-- excluir páginas;
-- renomear documento;
-- exportar PDF;
-- exportar imagem;
-- compartilhar;
-- salvar no histórico;
-- pesquisar scans;
-- abrir OCR e copiar texto.
-
-## Privacidade
-
-Princípios do projeto:
-
-- processamento local por padrão;
-- sem upload obrigatório;
-- sem dependência de backend no MVP;
-- permissões reduzidas ao mínimo necessário;
-- documentação pública clara sobre uso de câmera, armazenamento e compartilhamento.
-
-## Publicação e documentação
-
-O repositório deve permanecer pronto para publicação e colaboração:
-
-- `README.md` enxuto e profissional;
-- `CHANGELOG.md` seguindo versionamento semântico;
-- documentação técnica em `docs/`;
-- planejamento em `planning/`;
-- site estático separado em `site/`;
-- workflows de CI e GitHub Pages em `.github/workflows/`.
-
-## Critérios de qualidade
+## Qualidade esperada
 
 O projeto é considerado saudável quando:
 
 - compila sem erro;
 - passa em `assembleDebug`, `testDebugUnitTest` e `lint`;
-- mantém namespace e imports consistentes;
-- evita arquivos gerados no versionamento;
-- preserva legibilidade do código e da documentação;
-- deixa claro o que já está pronto e o que ainda é roadmap.
+- mantém README, roadmap, changelog, site e versão coerentes;
+- deixa claro que o scanner rápido é o caminho principal;
+- mantém o editor manual funcional como fallback real.

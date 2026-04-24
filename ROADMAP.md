@@ -4,9 +4,9 @@ Este roadmap prioriza estabilidade, usabilidade e qualidade real do fluxo de esc
 
 ## Estratégia
 
-1. primeiro corrigir UX e estabilidade do fluxo manual
-2. depois integrar um fluxo rápido confiável com o motor do Google
-3. depois polir performance, OCR e material público
+1. manter o scanner rápido do Google como caminho principal
+2. preservar o fluxo manual como fallback editável e confiável
+3. polir performance, OCR, exportação e material público
 
 ## Regras de evolução
 
@@ -129,7 +129,34 @@ Este roadmap prioriza estabilidade, usabilidade e qualidade real do fluxo de esc
 
 ---
 
-## Depois da v0.2.1
+## v0.2.2 — Scanner Rápido no Centro
+
+**Status:** concluída em 2026-04-24
+
+**Objetivo:** consolidar `Escanear rápido` como fluxo principal do Scanora, manter o manual como fallback editável e corrigir a dependência de URIs temporárias vindas do scanner, galeria ou CameraX.
+
+### Entregue
+
+- Home reorganizada com CTA principal único para `Escanear rápido`;
+- galeria continua habilitada pelo fluxo do Google quando o dispositivo oferece suporte;
+- manual/importação direta foram reposicionados em `Ajuste manual`;
+- imagens de entrada agora são copiadas para `filesDir/scan-sources` antes de criar o lote no histórico local;
+- scanner rápido cria lote com origem clara e abre direto na revisão;
+- tela manual deixou de mostrar atalho concorrente para o scanner guiado;
+- OCR ganhou botão forte `Copiar tudo`, feedback curto e blocos de leitura mais claros;
+- exportação ganhou feedback curto de sucesso mantendo qualidade visível apenas para PDF;
+- `escopo.md` da raiz passou a ser a referência principal de produto desta fase.
+
+### Resultado esperado desta release
+
+- o app deixa de parecer dividido entre dois fluxos principais;
+- importações e scans recentes continuam úteis mesmo depois que URIs temporárias deixam de existir;
+- revisão, OCR e exportação ficam mais coerentes com um fluxo rápido de scanner;
+- o fallback manual segue disponível sem tomar o lugar do scanner do Google.
+
+---
+
+## Depois da v0.2.2
 
 ### Candidatos para uma fase futura
 

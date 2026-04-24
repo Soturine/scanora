@@ -3,7 +3,7 @@
 ![Android](https://img.shields.io/badge/platform-Android-2E7D8C)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-23414B)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-DD8A2E)
-![Version](https://img.shields.io/badge/version-0.2.1-133942)
+![Version](https://img.shields.io/badge/version-0.2.2-133942)
 [![Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml)
 [![Deploy Pages](https://github.com/Soturine/scanora/actions/workflows/pages.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/pages.yml)
 
@@ -15,8 +15,10 @@ Site: https://soturine.github.io/scanora/
 
 ## O que o app já faz
 
-- scanner rápido com `ML Kit Document Scanner` direto na Home;
-- captura manual com `CameraX` e importação da galeria como fallback editável;
+- scanner rápido com `ML Kit Document Scanner` como fluxo principal direto na Home;
+- importação de galeria pelo fluxo do Google quando suportada;
+- captura manual com `CameraX` e importação direta como fallback editável;
+- cópia das imagens de entrada para armazenamento interno antes de criar o lote local;
 - sugestão inicial de crop mais robusta para fotos inclinadas, galeria e fundos poluídos;
 - reajuste automático do crop e editor manual mais confortável para acertos finos;
 - filtros locais recalibrados para documento, cinza, cor e recibo com menos risco de estourar a página;
@@ -91,7 +93,7 @@ Política completa em [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 ## Status
 
-`0.2.1` endurece o fallback manual/importado com auto crop mais estável, filtros menos destrutivos, revisão mais limpa, OCR mais legível e exportação menos poluída. O próximo passo natural continua sendo fechar QA visual em dispositivo e publicar capturas oficiais.
+`0.2.2` consolida o scanner rápido como fluxo principal, reposiciona o manual como fallback editável, corrige a dependência de URIs temporárias na entrada, simplifica a Home e deixa OCR/exportação mais diretos. O próximo passo natural continua sendo fechar QA visual em dispositivo e publicar capturas oficiais.
 
 ## Contribuir
 

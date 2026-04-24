@@ -15,7 +15,7 @@ O projeto foi dividido em módulos para manter o app simples no MVP, mas já com
 - `core-ui`
   Define tema, paleta, tipografia e componentes reutilizáveis de Compose.
 - `feature-home`
-  Entrada do produto com CTA principal de scanner rápido, fallback manual e lista recente.
+  Entrada do produto com CTA principal de scanner rápido, ajuste manual secundário e lista recente.
 - `feature-camera`
   Captura manual com CameraX.
 - `feature-editor`
@@ -48,7 +48,7 @@ O projeto foi dividido em módulos para manter o app simples no MVP, mas já com
 O app usa duas estratégias complementares:
 
 - `ML Kit Document Scanner`
-  Caminho principal de captura rápida quando disponível, com experiência guiada e menor atrito.
+  Caminho principal de captura/importação rápida quando disponível, com experiência guiada e menor atrito.
 - Pipeline local em `DefaultDocumentProcessingRepository`
   Voltado para captura manual e importação da galeria, com:
   - estimativa heurística de quadrilátero por bordas, brilho e amostras laterais;
@@ -58,9 +58,11 @@ O app usa duas estratégias complementares:
   - prévia em duas etapas com cache;
   - saída dedicada para OCR e limpeza de borda preta.
 
+Antes de criar um lote no Room, imagens vindas do scanner rápido, galeria ou CameraX são copiadas para `filesDir/scan-sources`. Assim preview, filtros, OCR e exportação não dependem de URIs temporárias fornecidas por outro app ou pelo scanner do Google.
+
 ## OCR
 
-O OCR local continua em ML Kit Text Recognition, mas a imagem enviada para reconhecimento não depende mais apenas do filtro salvo da página. A base consolidada até a `0.2.1` prepara uma versão específica para leitura antes de chamar a engine.
+O OCR local continua em ML Kit Text Recognition, mas a imagem enviada para reconhecimento não depende mais apenas do filtro salvo da página. A base consolidada até a `0.2.2` prepara uma versão específica para leitura antes de chamar a engine e apresenta o resultado em blocos copiáveis.
 
 ## Exportação
 

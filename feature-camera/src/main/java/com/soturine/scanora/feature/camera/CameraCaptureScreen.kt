@@ -2,11 +2,8 @@ package com.soturine.scanora.feature.camera
 
 import android.Manifest
 import android.content.Context
-import android.content.ContextWrapper
 import android.net.Uri
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -26,7 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.CameraAlt
-import androidx.compose.material.icons.outlined.DocumentScanner
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -51,9 +47,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
-import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
-import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,7 +55,6 @@ fun CameraCaptureScreen(
     state: CameraCaptureUiState,
     onPermissionResult: (Boolean) -> Unit,
     onCapturedImage: (String) -> Unit,
-    onCapturedBatch: (List<String>) -> Unit,
     onBack: () -> Unit,
     onCaptureStarted: () -> Unit,
     onCaptureFinished: () -> Unit,
@@ -70,10 +62,8 @@ fun CameraCaptureScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val activity = context.findActivity()
     val lifecycleOwner = LocalLifecycleOwner.current
     val snackbarHostState = remember { SnackbarHostState() }
-    val scannerUnavailableMessage = stringResource(id = R.string.camera_scanner_unavailable)
     val captureFailedMessage = stringResource(id = R.string.camera_capture_failed)
     val imageCapture = remember {
         ImageCapture.Builder()
@@ -85,16 +75,6 @@ fun CameraCaptureScreen(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = onPermissionResult,
     )
-    val guidedScanLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartIntentSenderForResult(),
-    ) { result ->
-        val scanResult = GmsDocumentScanningResult.fromActivityResultIntent(result.data)
-        val pages = scanResult?.pages.orEmpty().mapNotNull { it.imageUri?.toString() }
-        if (pages.isNotEmpty()) {
-            onCapturedBatch(pages)
-        }
-    }
-
     LaunchedEffect(Unit) {
         permissionLauncher.launch(Manifest.permission.CAMERA)
     }
@@ -115,40 +95,6 @@ fun CameraCaptureScreen(
                         Icon(
                             imageVector = Icons.Outlined.ArrowBack,
                             contentDescription = stringResource(id = R.string.camera_back),
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            if (activity == null) {
-                                onError(scannerUnavailableMessage)
-                                return@IconButton
-                            }
-                            val options = GmsDocumentScannerOptions.Builder()
-                                .setGalleryImportAllowed(true)
-                                .setPageLimit(12)
-                                .setResultFormats(
-                                    GmsDocumentScannerOptions.RESULT_FORMAT_JPEG,
-                                    GmsDocumentScannerOptions.RESULT_FORMAT_PDF,
-                                )
-                                .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
-                                .build()
-                            GmsDocumentScanning.getClient(options)
-                                .getStartScanIntent(activity)
-                                .addOnSuccessListener { intentSender ->
-                                    guidedScanLauncher.launch(
-                                        IntentSenderRequest.Builder(intentSender).build(),
-                                    )
-                                }
-                                .addOnFailureListener {
-                                    onError(scannerUnavailableMessage)
-                                }
-                        },
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.DocumentScanner,
-                            contentDescription = stringResource(id = R.string.camera_guided_scan),
                         )
                     }
                 },
@@ -234,7 +180,6 @@ fun CameraCaptureScreen(
         }
     }
 }
-
 @Composable
 private fun CameraPreview(
     imageCapture: ImageCapture,
@@ -284,10 +229,4 @@ private fun capturePhoto(
             }
         },
     )
-}
-
-private fun Context.findActivity(): ComponentActivity? = when (this) {
-    is ComponentActivity -> this
-    is ContextWrapper -> baseContext.findActivity()
-    else -> null
 }

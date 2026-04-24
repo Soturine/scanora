@@ -55,11 +55,21 @@ fun ExportScreen(
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val exportSuccessMessage = if (state.exportedFiles.size == 1) {
+        stringResource(id = R.string.export_success_snackbar_single)
+    } else {
+        stringResource(id = R.string.export_success_snackbar_multiple, state.exportedFiles.size)
+    }
 
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
             snackbarHostState.showSnackbar(it)
             onClearMessage()
+        }
+    }
+    LaunchedEffect(state.exportedFiles) {
+        if (state.exportedFiles.isNotEmpty()) {
+            snackbarHostState.showSnackbar(exportSuccessMessage)
         }
     }
 

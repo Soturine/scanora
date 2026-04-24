@@ -20,6 +20,8 @@
     <string name="export_ready_eyebrow">Arquivos prontos</string>
     <string name="export_ready_title">Exportação concluída</string>
     <string name="export_success_message">%1$d arquivo(s) pronto(s) para abrir ou compartilhar.</string>
+    <string name="export_success_snackbar_single">Arquivo salvo.</string>
+    <string name="export_success_snackbar_multiple">%1$d arquivos salvos.</string>
     <string name="export_share_action">Compartilhar arquivos</string>
     <string name="export_location_label">Salvo em: %1$s</string>
     <string name="export_open_file_action">Abrir arquivo</string>

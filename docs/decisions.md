@@ -12,13 +12,17 @@ Não foi introduzido framework de injeção para manter o bootstrap simples e f�
 
 O projeto usa:
 
-- CameraX para cumprir captura manual e controle da experiência própria;
 - ML Kit Document Scanner para o caminho principal, rápido e confiável;
+- CameraX para captura manual quando o usuário precisa de controle fino;
 - editor manual local como fallback obrigatório quando o palpite inicial não basta.
 
 Isso evita prometer um pipeline local perfeito em todos os cenários, mas mantém autonomia de edição quando o scanner guiado não é suficiente.
 
-## 4. Quadrilátero normalizado
+## 4. Imagens de entrada persistidas
+
+Desde a `v0.2.2`, imagens retornadas pelo scanner rápido, galeria ou CameraX são copiadas para armazenamento interno antes de entrar no Room. A decisão corrige a dependência de URIs temporárias e mantém preview, filtros, OCR e exportação apontando para uma fonte estável.
+
+## 5. Quadrilátero normalizado
 
 As coordenadas do crop são armazenadas em formato proporcional (`0..1`) em vez de pixels absolutos. Isso simplifica:
 
@@ -26,18 +30,18 @@ As coordenadas do crop são armazenadas em formato proporcional (`0..1`) em vez 
 - edição manual no overlay;
 - reprocessamento da imagem em tamanhos diferentes.
 
-## 5. Preview em duas etapas
+## 6. Preview em duas etapas
 
 A prévia de filtros não usa full-res na UI. O editor primeiro renderiza uma imagem intermediária rápida e depois substitui por uma refinada em segundo plano, com debounce, cancelamento de job e cache.
 
-## 6. OCR com imagem preparada
+## 7. OCR com imagem preparada
 
-O OCR local não depende mais só do filtro final salvo da página. A decisão consolidada até a `0.2.1` foi criar uma saída dedicada para leitura, reduzindo ruído visual e casos em que o próprio filtro prejudicava a engine.
+O OCR local não depende mais só do filtro final salvo da página. A decisão consolidada até a `0.2.2` foi criar uma saída dedicada para leitura, reduzir ruído visual e apresentar blocos com cópia rápida.
 
-## 7. Exportação local mais encontrável
+## 8. Exportação local mais encontrável
 
 PDF, JPG e PNG seguem locais, mas a base atual usa `Downloads/Scanora` em Android 10+ para resolver o problema prático de “exportei e não achei o arquivo”.
 
-## 8. Sem Firebase no MVP
+## 9. Sem Firebase no MVP
 
 Foi uma decisão consciente para manter o escopo honesto, offline e sem dependências de backend antes da hora.

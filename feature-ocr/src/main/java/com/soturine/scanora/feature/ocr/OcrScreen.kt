@@ -3,13 +3,14 @@ package com.soturine.scanora.feature.ocr
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -19,15 +20,18 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
@@ -36,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.soturine.scanora.core.ui.component.AsyncUriImage
 import com.soturine.scanora.core.ui.component.EmptyStateCard
 import com.soturine.scanora.core.ui.component.SectionHeader
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +53,8 @@ fun OcrScreen(
 ) {
     val clipboardManager = LocalClipboardManager.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val copySuccessMessage = stringResource(id = R.string.ocr_copy_success)
     val paragraphs = remember(state.text) {
         state.text
             .split(Regex("\\n{2,}"))
@@ -77,6 +84,42 @@ fun OcrScreen(
                     }
                 },
             )
+        },
+        bottomBar = {
+            if (state.page != null) {
+                Surface(shadowElevation = 8.dp) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        if (state.isLoading) {
+                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        }
+                        Button(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(readableText))
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(copySuccessMessage)
+                                }
+                            },
+                            enabled = readableText.isNotBlank() && !state.isLoading,
+                        ) {
+                            Text(text = stringResource(id = R.string.ocr_copy_all))
+                        }
+                        FilledTonalButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = onRecognizeAgain,
+                            enabled = !state.isLoading,
+                        ) {
+                            Text(text = stringResource(id = R.string.ocr_retry))
+                        }
+                    }
+                }
+            }
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { innerPadding ->
@@ -127,24 +170,6 @@ fun OcrScreen(
                                     .height(216.dp),
                                 maxDimension = 1700,
                             )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                Button(
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { clipboardManager.setText(AnnotatedString(state.text)) },
-                                    enabled = state.text.isNotBlank(),
-                                ) {
-                                    Text(text = stringResource(id = R.string.ocr_copy))
-                                }
-                                FilledTonalButton(
-                                    modifier = Modifier.weight(1f),
-                                    onClick = onRecognizeAgain,
-                                ) {
-                                    Text(text = stringResource(id = R.string.ocr_retry))
-                                }
-                            }
                         }
                     }
                 }
@@ -155,64 +180,76 @@ fun OcrScreen(
                             message = stringResource(id = R.string.ocr_empty_text),
                         )
                     }
-                } else {
+                } else if (paragraphs.isEmpty()) {
                     item {
                         Card {
-                            SelectionContainer {
-                                Column(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(18.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    Text(
-                                        text = stringResource(id = R.string.ocr_blocks_title),
-                                        style = MaterialTheme.typography.titleMedium,
-                                    )
-                                    Text(
-                                        text = if (state.isLoading && readableText.isBlank()) {
-                                            stringResource(id = R.string.ocr_processing_detail)
-                                        } else {
-                                            readableText
-                                        },
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                    )
-                                }
+                            ) {
+                                Text(
+                                    text = stringResource(id = R.string.ocr_blocks_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                                Text(
+                                    text = stringResource(id = R.string.ocr_processing_detail),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
                             }
                         }
                     }
-                    if (!state.isLoading && paragraphs.isNotEmpty()) {
-                        item {
-                            Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                                ),
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                                ) {
-                                    Text(
-                                        text = stringResource(id = R.string.ocr_blocks_eyebrow),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.primary,
-                                    )
-                                    Text(
-                                        text = stringResource(
-                                            id = R.string.ocr_supporting,
-                                            paragraphs.size,
-                                        ),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            }
-                        }
+                } else {
+                    item {
+                        SectionHeader(
+                            eyebrow = stringResource(id = R.string.ocr_blocks_eyebrow),
+                            title = stringResource(id = R.string.ocr_blocks_title),
+                            supportingText = stringResource(id = R.string.ocr_blocks_supporting),
+                        )
+                    }
+                    itemsIndexed(paragraphs) { index, block ->
+                        OcrTextBlock(
+                            index = index,
+                            text = block,
+                        )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OcrTextBlock(
+    index: Int,
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ),
+    ) {
+        SelectionContainer {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = stringResource(id = R.string.ocr_block_label, index + 1),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
             }
         }
     }
