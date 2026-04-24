@@ -3,6 +3,7 @@ package com.soturine.scanora.feature.ocr
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.soturine.scanora.core.common.model.DocumentFilterType
+import com.soturine.scanora.core.common.model.OcrTextResult
 import com.soturine.scanora.core.common.model.ScanPage
 import com.soturine.scanora.core.common.repository.DocumentProcessingRepository
 import com.soturine.scanora.core.common.repository.OcrRepository
@@ -24,7 +25,7 @@ class OcrViewModel(
     private val processingRepository: DocumentProcessingRepository,
     private val ocrRepository: OcrRepository,
 ) : ViewModel() {
-    private val recognizedText = MutableStateFlow("")
+    private val recognizedResult = MutableStateFlow(OcrTextResult.Empty)
     private val previewImageUri = MutableStateFlow<String?>(null)
     private val isLoading = MutableStateFlow(false)
     private val errorMessage = MutableStateFlow<String?>(null)
@@ -32,15 +33,21 @@ class OcrViewModel(
     val uiState: StateFlow<OcrUiState> = combine(
         scanRepository.observeScan(scanId),
         previewImageUri,
-        recognizedText,
+        recognizedResult,
         isLoading,
         errorMessage,
-    ) { scan, previewUri, text, loading, message ->
+    ) { scan, previewUri, result, loading, message ->
         val page = scan?.pages?.firstOrNull { it.id == pageId }
+        val resolvedResult = if (result.fullText.isBlank()) {
+            OcrTextResult.fromPlainText(page?.ocrText.orEmpty())
+        } else {
+            result
+        }
         OcrUiState(
             page = page,
             previewImageUri = previewUri ?: page?.displayUri,
-            text = if (text.isBlank()) page?.ocrText.orEmpty() else text,
+            text = resolvedResult.fullText,
+            blocks = resolvedResult.blocks,
             isLoading = loading,
             errorMessage = message,
         )
@@ -82,9 +89,9 @@ class OcrViewModel(
                 preferReceiptMode = page.filterType == DocumentFilterType.RECEIPT_HIGH_CONTRAST,
             )
             previewImageUri.value = preparedUri
-            val text = ocrRepository.recognizeText(preparedUri)
-            recognizedText.value = text
-            scanRepository.updatePageOcr(scanId, pageId, text)
+            val result = ocrRepository.recognizeText(preparedUri)
+            recognizedResult.value = result
+            scanRepository.updatePageOcr(scanId, pageId, result.fullText)
         }.onFailure { throwable ->
             errorMessage.value = throwable.message ?: "Não foi possível reconhecer o texto."
         }

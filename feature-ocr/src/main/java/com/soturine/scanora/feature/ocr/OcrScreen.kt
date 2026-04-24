@@ -3,6 +3,7 @@ package com.soturine.scanora.feature.ocr
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -37,6 +39,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import com.soturine.scanora.core.common.model.OcrTextBlock
 import com.soturine.scanora.core.ui.component.AsyncUriImage
 import com.soturine.scanora.core.ui.component.EmptyStateCard
 import com.soturine.scanora.core.ui.component.SectionHeader
@@ -55,13 +58,8 @@ fun OcrScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val copySuccessMessage = stringResource(id = R.string.ocr_copy_success)
-    val paragraphs = remember(state.text) {
-        state.text
-            .split(Regex("\\n{2,}"))
-            .map(String::trim)
-            .filter(String::isNotBlank)
-    }
-    val readableText = remember(paragraphs) { paragraphs.joinToString(separator = "\n\n") }
+    val blocks = state.blocks
+    val readableText = remember(state.text) { state.text.trim() }
 
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
@@ -158,10 +156,11 @@ fun OcrScreen(
                                 } else {
                                     stringResource(id = R.string.ocr_result_title)
                                 },
-                                supportingText = stringResource(
-                                    id = R.string.ocr_supporting,
-                                    paragraphs.size,
-                                ),
+                                supportingText = if (state.isLoading && blocks.isEmpty()) {
+                                    stringResource(id = R.string.ocr_processing_detail)
+                                } else {
+                                    stringResource(id = R.string.ocr_supporting, blocks.size)
+                                },
                             )
                             AsyncUriImage(
                                 imageUri = state.previewImageUri ?: state.page.displayUri,
@@ -173,14 +172,14 @@ fun OcrScreen(
                         }
                     }
                 }
-                if (paragraphs.isEmpty() && !state.isLoading) {
+                if (blocks.isEmpty() && !state.isLoading) {
                     item {
                         EmptyStateCard(
                             title = stringResource(id = R.string.ocr_empty_title),
                             message = stringResource(id = R.string.ocr_empty_text),
                         )
                     }
-                } else if (paragraphs.isEmpty()) {
+                } else if (blocks.isEmpty()) {
                     item {
                         Card {
                             Column(
@@ -209,10 +208,16 @@ fun OcrScreen(
                             supportingText = stringResource(id = R.string.ocr_blocks_supporting),
                         )
                     }
-                    itemsIndexed(paragraphs) { index, block ->
-                        OcrTextBlock(
+                    itemsIndexed(blocks) { index, block ->
+                        RecognizedTextBlockCard(
                             index = index,
-                            text = block,
+                            block = block,
+                            onCopy = {
+                                clipboardManager.setText(AnnotatedString(block.text))
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(copySuccessMessage)
+                                }
+                            },
                         )
                     }
                 }
@@ -222,9 +227,10 @@ fun OcrScreen(
 }
 
 @Composable
-private fun OcrTextBlock(
+private fun RecognizedTextBlockCard(
     index: Int,
-    text: String,
+    block: OcrTextBlock,
+    onCopy: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -233,23 +239,35 @@ private fun OcrTextBlock(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         ),
     ) {
-        SelectionContainer {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
                     text = stringResource(id = R.string.ocr_block_label, index + 1),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+                OutlinedButton(onClick = onCopy) {
+                    Text(text = stringResource(id = R.string.ocr_copy_block))
+                }
+            }
+            SelectionContainer {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    block.lines.forEach { line ->
+                        Text(
+                            text = line.text,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                }
             }
         }
     }

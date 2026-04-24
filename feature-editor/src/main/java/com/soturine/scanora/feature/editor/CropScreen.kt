@@ -490,6 +490,12 @@ fun ReviewScreen(
                         .padding(horizontal = 20.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = onOpenExport,
+                    ) {
+                        Text(text = stringResource(id = R.string.editor_open_export))
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -508,12 +514,6 @@ fun ReviewScreen(
                         ) {
                             Text(text = stringResource(id = R.string.editor_open_filters))
                         }
-                    }
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = onOpenExport,
-                    ) {
-                        Text(text = stringResource(id = R.string.editor_open_export))
                     }
                 }
             }
@@ -539,23 +539,23 @@ fun ReviewScreen(
                             .padding(18.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        SectionHeader(
-                            eyebrow = stringResource(id = R.string.editor_review_eyebrow),
-                            title = title,
-                            supportingText = stringResource(
-                                id = R.string.editor_review_summary,
-                                orderedPages.size,
-                            ),
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            text = if (scan.tags.isNotEmpty()) {
-                                scan.tags.joinToString(separator = " • ")
-                            } else {
-                                stringResource(id = R.string.editor_review_helper)
-                            },
+                            text = stringResource(id = R.string.editor_review_summary, orderedPages.size),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        if (scan.tags.isNotEmpty()) {
+                            Text(
+                                text = scan.tags.joinToString(separator = " / "),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
                         OutlinedButton(onClick = { metadataExpanded = !metadataExpanded }) {
                             Text(
                                 text = if (metadataExpanded) {
@@ -625,16 +625,11 @@ fun ReviewScreen(
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     Text(
                         text = stringResource(id = R.string.editor_pages_section),
                         style = MaterialTheme.typography.titleMedium,
-                    )
-                    Text(
-                        text = stringResource(id = R.string.editor_pages_supporting),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -740,11 +735,27 @@ private fun SelectedPageCard(
                 .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            SectionHeader(
-                eyebrow = stringResource(id = R.string.editor_selected_page_eyebrow),
-                title = stringResource(id = R.string.editor_page_title, pageNumber),
-                supportingText = page.filterType.title,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = stringResource(id = R.string.editor_page_title, pageNumber),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = page.filterType.title,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                FilledTonalButton(onClick = onOpenOcr) {
+                    Text(text = stringResource(id = R.string.editor_open_ocr))
+                }
+            }
             AsyncUriImage(
                 imageUri = page.displayUri,
                 modifier = Modifier
@@ -757,14 +768,8 @@ private fun SelectedPageCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                FilledTonalButton(
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenOcr,
-                ) {
-                    Text(text = stringResource(id = R.string.editor_open_ocr))
-                }
                 OutlinedButton(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                     onClick = onDelete,
                 ) {
                     Text(text = stringResource(id = R.string.editor_delete_page))

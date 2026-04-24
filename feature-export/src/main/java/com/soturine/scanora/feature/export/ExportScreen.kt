@@ -143,6 +143,7 @@ fun ExportScreen(
                     .padding(24.dp),
             )
         } else {
+            val selectedKind = state.selectedFormat.exportKind()
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -187,20 +188,68 @@ fun ExportScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
-                            ExportFormat.entries.forEach { format ->
+                            ExportKind.entries.forEach { kind ->
                                 ExportChoiceButton(
                                     modifier = Modifier.weight(1f),
-                                    title = format.title,
-                                    selected = state.selectedFormat == format,
-                                    onClick = { onSelectFormat(format) },
+                                    title = kind.title(),
+                                    selected = selectedKind == kind,
+                                    onClick = {
+                                        onSelectFormat(
+                                            when (kind) {
+                                                ExportKind.PDF -> ExportFormat.PDF
+                                                ExportKind.IMAGE ->
+                                                    state.selectedFormat.takeIf { it.exportKind() == ExportKind.IMAGE }
+                                                        ?: ExportFormat.JPG
+                                            },
+                                        )
+                                    },
                                 )
                             }
                         }
                         Text(
-                            text = state.selectedFormat.description(),
+                            text = selectedKind.description(),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                    }
+                }
+                if (selectedKind == ExportKind.IMAGE) {
+                    item {
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                            ),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                Text(
+                                    text = stringResource(id = R.string.export_image_format_section),
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    listOf(ExportFormat.JPG, ExportFormat.PNG).forEach { format ->
+                                        ExportChoiceButton(
+                                            modifier = Modifier.weight(1f),
+                                            title = format.title,
+                                            selected = state.selectedFormat == format,
+                                            onClick = { onSelectFormat(format) },
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = stringResource(id = R.string.export_image_format_supporting),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
                 }
                 if (state.selectedFormat == ExportFormat.PDF) {
@@ -283,6 +332,7 @@ fun ExportScreen(
                         ExportedFileCard(
                             file = file,
                             onOpen = { onOpenFile(file) },
+                            onShare = { onShare(listOf(file)) },
                         )
                     }
                 }
@@ -325,6 +375,7 @@ private fun ExportChoiceButton(
 private fun ExportedFileCard(
     file: ExportedFile,
     onOpen: () -> Unit,
+    onShare: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -339,51 +390,93 @@ private fun ExportedFileCard(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top,
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = file.displayName,
-                        style = MaterialTheme.typography.titleSmall,
-                    )
-                    Text(
-                        text = file.mimeType.typeLabel(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Text(
-                    text = file.sizeLabel(),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
             Text(
-                text = stringResource(id = R.string.export_location_label, file.locationLabel),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = file.displayName,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            ExportMetadataLine(
+                label = stringResource(id = R.string.export_file_type),
+                value = file.mimeType.typeLabel(),
+            )
+            ExportMetadataLine(
+                label = stringResource(id = R.string.export_file_size),
+                value = file.sizeLabel(),
+            )
+            ExportMetadataLine(
+                label = stringResource(id = R.string.export_file_location),
+                value = file.locationLabel,
             )
             file.pathHint?.takeIf { it.isNotBlank() }?.let { pathHint ->
-                Text(
-                    text = pathHint,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                ExportMetadataLine(
+                    label = stringResource(id = R.string.export_file_path),
+                    value = pathHint,
                 )
             }
-            OutlinedButton(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = onOpen,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text(text = stringResource(id = R.string.export_open_file_action))
+                FilledTonalButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = onOpen,
+                ) {
+                    Text(text = stringResource(id = R.string.export_open_file_action))
+                }
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = onShare,
+                ) {
+                    Text(text = stringResource(id = R.string.export_share_file_action))
+                }
             }
         }
     }
+}
+
+@Composable
+private fun ExportMetadataLine(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            modifier = Modifier.weight(1f),
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = androidx.compose.ui.text.style.TextAlign.End,
+        )
+    }
+}
+
+private enum class ExportKind {
+    PDF,
+    IMAGE,
+}
+
+private fun ExportFormat.exportKind(): ExportKind =
+    if (this == ExportFormat.PDF) ExportKind.PDF else ExportKind.IMAGE
+
+@Composable
+private fun ExportKind.title(): String = when (this) {
+    ExportKind.PDF -> stringResource(id = R.string.export_kind_pdf)
+    ExportKind.IMAGE -> stringResource(id = R.string.export_kind_image)
+}
+
+private fun ExportKind.description(): String = when (this) {
+    ExportKind.PDF -> "Gera um arquivo único para arquivar, enviar ou imprimir."
+    ExportKind.IMAGE -> "Salva cada página como imagem independente."
 }
 
 private fun ExportFormat.description(): String = when (this) {

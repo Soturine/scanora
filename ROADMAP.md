@@ -156,7 +156,31 @@ Este roadmap prioriza estabilidade, usabilidade e qualidade real do fluxo de esc
 
 ---
 
-## Depois da v0.2.2
+## v0.2.3 - Pos-scan que Parece Produto
+
+**Status:** concluida em 2026-04-24
+
+**Objetivo:** transformar OCR, revisao, exportacao e pos-exportacao em uma experiencia clara, util e menos tecnica.
+
+### Entregue
+
+- OCR passou a usar resultado estruturado em blocos e linhas do ML Kit, mantendo o texto completo persistido no historico;
+- tela de OCR ficou mais limpa, com `Copiar tudo` como acao principal e copia por bloco como acao secundaria;
+- exportacao agora comeca por `PDF` ou `Imagem`, abrindo qualidade apenas para PDF e JPG/PNG apenas para imagem;
+- pos-exportacao mostra nome, tipo, tamanho, local salvo, caminho quando disponivel, abrir e compartilhar por arquivo;
+- revisao colocou `Exportar lote` como CTA principal, reduziu texto de apoio e manteve nome/tags em disclosure progressivo;
+- documentacao publica e versao foram alinhadas para `0.2.3`.
+
+### Resultado esperado desta release
+
+- OCR deixa de parecer texto despejado e passa a ter leitura por blocos;
+- exportacao fica compreensivel para qualquer usuario antes e depois de salvar;
+- revisao parece ferramenta rapida de conferencia, nao formulario;
+- o scanner rapido continua sendo o fluxo principal e o manual segue como fallback editavel.
+
+---
+
+## Depois da v0.2.3
 
 ### Candidatos para uma fase futura
 

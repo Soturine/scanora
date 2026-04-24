@@ -4,6 +4,27 @@ Este projeto segue Semantic Versioning e recomenda Conventional Commits no fluxo
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-04-24
+
+### Added
+
+- Resultado de OCR estruturado em blocos e linhas, preservando o texto completo salvo por pagina.
+- Acao `Copiar bloco` na tela de OCR alem do `Copiar tudo`.
+- Pos-exportacao por arquivo com nome, tipo, tamanho, local salvo, caminho quando disponivel, abrir e compartilhar.
+
+### Changed
+
+- Tela de OCR foi refeita para leitura por blocos, com hierarquia mais limpa e acao principal fixa no rodape.
+- Exportacao passou a escolher primeiro entre `PDF` e `Imagem`, mostrando qualidade apenas para PDF e JPG/PNG apenas no fluxo de imagem.
+- Revisao deixou `Exportar lote` como CTA principal e reduziu textos/blocos secundarios.
+- Documentacao publica e arquivos de versao foram alinhados para `0.2.3`.
+
+### Fixed
+
+- Sensacao de texto OCR jogado na tela mesmo quando a engine reconhecia estrutura util.
+- Poluicao visual causada por opcoes simultaneas de exportacao.
+- Falta de clareza no estado final sobre arquivo salvo, formato, tamanho, local e proximas acoes.
+
 ## [0.2.2] - 2026-04-24
 
 ### Added

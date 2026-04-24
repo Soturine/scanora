@@ -9,6 +9,9 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.soturine.scanora.core.common.model.OcrTextBlock
+import com.soturine.scanora.core.common.model.OcrTextLine
+import com.soturine.scanora.core.common.model.OcrTextResult
 import com.soturine.scanora.core.common.repository.OcrRepository
 import java.io.File
 import kotlin.math.max
@@ -19,8 +22,8 @@ import kotlinx.coroutines.withContext
 class DefaultOcrRepository(
     private val context: Context,
 ) : OcrRepository {
-    override suspend fun recognizeText(imageUri: String): String = withContext(Dispatchers.IO) {
-        val bitmap = loadBitmap(imageUri, maxDimension = 2200) ?: return@withContext ""
+    override suspend fun recognizeText(imageUri: String): OcrTextResult = withContext(Dispatchers.IO) {
+        val bitmap = loadBitmap(imageUri, maxDimension = 2200) ?: return@withContext OcrTextResult.Empty
         val prepared = prepareForOcr(bitmap)
         val inputImage = InputImage.fromBitmap(prepared, 0)
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
@@ -60,17 +63,21 @@ class DefaultOcrRepository(
         return Bitmap.createBitmap(output, width, height, Bitmap.Config.ARGB_8888)
     }
 
-    private fun formatRecognizedText(result: Text): String {
-        val formattedBlocks = result.textBlocks
+    private fun formatRecognizedText(result: Text): OcrTextResult {
+        val blocks = result.textBlocks
             .mapNotNull { block ->
-                block.lines
-                    .map { it.text.trim() }
-                    .filter { it.isNotBlank() }
-                    .joinToString("\n")
-                    .trim()
-                    .takeIf { it.isNotBlank() }
+                val lines = block.lines
+                    .mapNotNull { line ->
+                        line.text.trim()
+                            .takeIf(String::isNotBlank)
+                            ?.let(::OcrTextLine)
+                    }
+                lines.takeIf { it.isNotEmpty() }?.let(::OcrTextBlock)
             }
-        return formattedBlocks.joinToString("\n\n").ifBlank { result.text.trim() }
+        return OcrTextResult(
+            blocks = blocks,
+            fallbackText = result.text.trim(),
+        )
     }
 
     private fun toGrayscale(bitmap: Bitmap): Bitmap {

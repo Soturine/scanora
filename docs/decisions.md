@@ -34,13 +34,13 @@ As coordenadas do crop são armazenadas em formato proporcional (`0..1`) em vez 
 
 A prévia de filtros não usa full-res na UI. O editor primeiro renderiza uma imagem intermediária rápida e depois substitui por uma refinada em segundo plano, com debounce, cancelamento de job e cache.
 
-## 7. OCR com imagem preparada
+## 7. OCR com imagem preparada e blocos
 
-O OCR local não depende mais só do filtro final salvo da página. A decisão consolidada até a `0.2.2` foi criar uma saída dedicada para leitura, reduzir ruído visual e apresentar blocos com cópia rápida.
+O OCR local não depende mais só do filtro final salvo da página. A base atual cria uma saída dedicada para leitura, reduz ruído visual e preserva blocos/linhas retornados pelo ML Kit para cópia rápida da página inteira ou de um bloco.
 
 ## 8. Exportação local mais encontrável
 
-PDF, JPG e PNG seguem locais, mas a base atual usa `Downloads/Scanora` em Android 10+ para resolver o problema prático de “exportei e não achei o arquivo”.
+PDF, JPG e PNG seguem locais, mas a base atual usa `Downloads/Scanora` em Android 10+ para resolver o problema prático de “exportei e não achei o arquivo”. A UI escolhe primeiro entre `PDF` e `Imagem`, revela apenas opções relevantes e mostra nome, tipo, tamanho, local salvo, abrir e compartilhar depois de gerar.
 
 ## 9. Sem Firebase no MVP
 

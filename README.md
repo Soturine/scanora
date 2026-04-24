@@ -3,7 +3,7 @@
 ![Android](https://img.shields.io/badge/platform-Android-2E7D8C)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-23414B)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-DD8A2E)
-![Version](https://img.shields.io/badge/version-0.2.2-133942)
+![Version](https://img.shields.io/badge/version-0.2.3-133942)
 [![Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml)
 [![Deploy Pages](https://github.com/Soturine/scanora/actions/workflows/pages.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/pages.yml)
 
@@ -22,8 +22,9 @@ Site: https://soturine.github.io/scanora/
 - sugestão inicial de crop mais robusta para fotos inclinadas, galeria e fundos poluídos;
 - reajuste automático do crop e editor manual mais confortável para acertos finos;
 - filtros locais recalibrados para documento, cinza, cor e recibo com menos risco de estourar a página;
-- OCR local com imagem preparada especificamente para leitura;
-- exportação em PDF, JPG e PNG com escolhas mais diretas e localização do arquivo mais clara;
+- OCR local com imagem preparada, leitura por blocos e `Copiar tudo` em destaque;
+- exportação em PDF, JPG e PNG com escolha progressiva entre PDF e Imagem;
+- pós-exportação com nome, tipo, tamanho, local salvo, abrir e compartilhar;
 - histórico local com título, tags, favoritos e busca.
 
 ## Proposta de valor
@@ -93,7 +94,7 @@ Política completa em [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 ## Status
 
-`0.2.2` consolida o scanner rápido como fluxo principal, reposiciona o manual como fallback editável, corrige a dependência de URIs temporárias na entrada, simplifica a Home e deixa OCR/exportação mais diretos. O próximo passo natural continua sendo fechar QA visual em dispositivo e publicar capturas oficiais.
+`0.2.3` mantém o scanner rápido como fluxo principal e melhora o pós-scan: OCR por blocos, revisão menos poluída, exportação progressiva e estado final com arquivo, tipo, tamanho, local salvo, abrir e compartilhar. O próximo passo natural continua sendo fechar QA visual em dispositivo e publicar capturas oficiais.
 
 ## Contribuir
 

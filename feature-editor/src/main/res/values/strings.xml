@@ -29,8 +29,8 @@
 
     <string name="editor_review_title">Revisão</string>
     <string name="editor_review_eyebrow">Lote em revisão</string>
-    <string name="editor_review_summary">%1$d página(s) prontas para revisar, organizar e exportar.</string>
-    <string name="editor_review_helper">Defina um nome só quando quiser organizar melhor o histórico.</string>
+    <string name="editor_review_summary">%1$d página(s) no lote.</string>
+    <string name="editor_review_helper">Nome e tags ficam nos detalhes.</string>
     <string name="editor_selected_page_eyebrow">Página em foco</string>
 
     <string name="editor_missing_page_title">Página indisponível</string>
@@ -39,7 +39,7 @@
     <string name="editor_document_name">Nome do documento</string>
     <string name="editor_tags">Tags</string>
     <string name="editor_tags_helper">Separe com vírgula para organizar o histórico depois.</string>
-    <string name="editor_edit_metadata">Editar nome e tags</string>
+    <string name="editor_edit_metadata">Detalhes do lote</string>
     <string name="editor_hide_metadata">Fechar detalhes</string>
     <string name="editor_save_metadata">Salvar informações</string>
 

@@ -21,7 +21,7 @@ O projeto foi dividido em módulos para manter o app simples no MVP, mas já com
 - `feature-editor`
   Ajuste de cantos, filtros, rotação e revisão do lote.
 - `feature-export`
-  Seleção de formato/qualidade, geração de arquivos e pós-exportação.
+  Escolha progressiva de PDF/Imagem, geração de arquivos e pós-exportação.
 - `feature-history`
   Histórico pesquisável e detalhe do scan salvo.
 - `feature-settings`
@@ -62,11 +62,11 @@ Antes de criar um lote no Room, imagens vindas do scanner rápido, galeria ou Ca
 
 ## OCR
 
-O OCR local continua em ML Kit Text Recognition, mas a imagem enviada para reconhecimento não depende mais apenas do filtro salvo da página. A base consolidada até a `0.2.2` prepara uma versão específica para leitura antes de chamar a engine e apresenta o resultado em blocos copiáveis.
+O OCR local continua em ML Kit Text Recognition, mas a imagem enviada para reconhecimento não depende mais apenas do filtro salvo da página. A base atual prepara uma versão específica para leitura antes de chamar a engine e preserva a estrutura de blocos e linhas retornada pelo ML Kit para a UI mostrar texto copiável por bloco ou por página inteira.
 
 ## Exportação
 
-PDF, JPG e PNG continuam sendo gerados localmente. Em Android 10+ a saída vai para `Downloads/Scanora`, enquanto versões anteriores usam o armazenamento do app. A camada de exportação devolve metadados para a UI mostrar nome, tipo, tamanho e local salvo.
+PDF, JPG e PNG continuam sendo gerados localmente. Em Android 10+ a saída vai para `Downloads/Scanora`, enquanto versões anteriores usam o armazenamento do app. A tela escolhe primeiro entre `PDF` e `Imagem`, mostra apenas opções relevantes ao formato atual e devolve metadados para a UI mostrar nome, tipo, tamanho, local salvo, abrir e compartilhar.
 
 ## Dependências principais
 

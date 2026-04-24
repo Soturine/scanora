@@ -10,6 +10,10 @@
     <string name="export_format_eyebrow">Formato</string>
     <string name="export_format_section">Como esse lote deve sair?</string>
     <string name="export_format_supporting">Selecione como o lote deve sair do celular.</string>
+    <string name="export_kind_pdf">PDF</string>
+    <string name="export_kind_image">Imagem</string>
+    <string name="export_image_format_section">Tipo de imagem</string>
+    <string name="export_image_format_supporting">Escolha JPG para arquivo mais leve ou PNG para preservar mais detalhe.</string>
     <string name="export_quality_eyebrow">Qualidade</string>
     <string name="export_quality_section">Qualidade do PDF</string>
     <string name="export_quality_supporting">A qualidade só aparece quando a saída selecionada é PDF.</string>
@@ -23,6 +27,11 @@
     <string name="export_success_snackbar_single">Arquivo salvo.</string>
     <string name="export_success_snackbar_multiple">%1$d arquivos salvos.</string>
     <string name="export_share_action">Compartilhar arquivos</string>
+    <string name="export_share_file_action">Compartilhar</string>
     <string name="export_location_label">Salvo em: %1$s</string>
+    <string name="export_file_type">Tipo</string>
+    <string name="export_file_size">Tamanho</string>
+    <string name="export_file_location">Salvo em</string>
+    <string name="export_file_path">Caminho</string>
     <string name="export_open_file_action">Abrir arquivo</string>
 </resources>
