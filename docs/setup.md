@@ -2,8 +2,8 @@
 
 ## Requisitos
 
-- Android Studio recente com suporte a AGP 9.1
-- JDK 17 ou superior compatível com AGP 9
+- Android Studio recente com suporte a AGP 9.1.1
+- JDK 17 ou superior compatível com AGP 9.1.1
 - Android SDK Platform 36
 - Android SDK Build Tools 36.0.0
 - Emulador Android recente ou dispositivo físico
@@ -33,9 +33,9 @@
 - Validação executada com:
 
 ```powershell
-$env:JAVA_HOME="C:\Program Files\Java\jdk-22"
+$env:JAVA_HOME="C:\Users\rafael\AppData\Local\Programs\Microsoft\jdk-17.0.10.7-hotspot"
 $env:ANDROID_SDK_ROOT="C:\Users\rafael\AppData\Local\Android\Sdk"
 .\gradlew.bat assembleDebug testDebugUnitTest lint --no-daemon
 ```
 
-- O build de linha de comando passou nesta máquina em `2026-04-21`.
+- O build de linha de comando passou nesta máquina em `2026-04-25` com a versão `0.2.5`.

@@ -4,6 +4,29 @@ Este projeto segue Semantic Versioning e recomenda Conventional Commits no fluxo
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-04-25
+
+### Added
+
+- Pós-processamento de OCR para ordenar linhas por posição visual, agrupar parágrafos e reduzir ruídos pequenos.
+- Modelo de OCR mais rico com texto consolidado, parágrafos, qualidade simples da leitura e contagem de ruído descartado.
+- Visualização alternável entre `Trechos` e `Texto contínuo` na tela de OCR.
+- Testes unitários para ordenação, agrupamento, remoção de ruído e geração de texto consolidado.
+
+### Changed
+
+- `Copiar tudo` agora usa a saída consolidada pós-processada, não os blocos crus do ML Kit.
+- Tela de OCR ficou mais minimalista, com preview menor, estados mais curtos e cópia por trecho.
+- OCR local preserva bounding boxes do ML Kit para ordenar e agrupar a leitura de forma mais natural.
+- Revisão mostra uma indicação discreta quando a página já tem OCR salvo.
+- Documentação, site e versão do app foram alinhados para `0.2.5` e AGP `9.1.1`.
+
+### Fixed
+
+- Resultado de OCR manual/importado fragmentado em muitos blocos ou palavras isoladas.
+- Saída de cópia com quebras artificiais, ordem visual ruim ou ruído claramente inútil.
+- Referências públicas antigas à versão anterior e à versão do Android Gradle Plugin.
+
 ## [0.2.4] - 2026-04-25
 
 ### Added
@@ -215,7 +238,7 @@ Este projeto segue Semantic Versioning e recomenda Conventional Commits no fluxo
 
 - Redução de escritas redundantes no Room ao renomear documentos e atualizar tags sem alterações reais.
 - Exibição de mensagens de erro na revisão, cobrindo validação de nome e falhas de persistência.
-- Ajustes de build para AGP 9.1, Kotlin 2.3.10 e dependências necessárias para compilar, lintar e testar localmente.
+- Ajustes de build para a linha AGP 9.1.x, Kotlin 2.3.10 e dependências necessárias para compilar, lintar e testar localmente.
 
 ### Planned
 

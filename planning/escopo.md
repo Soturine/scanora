@@ -14,12 +14,12 @@ Identidade técnica atual:
 
 ## Direção de produto
 
-A partir da `v0.2.3`, o produto assume uma decisão clara:
+A partir da `v0.2.5`, o produto mantém uma decisão clara:
 
 - `Escanear rápido` com `GmsDocumentScanner` é o fluxo principal;
 - galeria/importação deve passar pelo scanner do Google quando houver suporte;
 - captura manual e importação direta continuam como fallback editável;
-- o valor do app está em lote local, revisão, ajuste fino, OCR por blocos, histórico e exportação sem atrito.
+- o valor do app está em lote local, revisão, ajuste fino, OCR consolidado por trechos, histórico e exportação sem atrito.
 
 ## Fluxo principal
 
@@ -30,7 +30,7 @@ A partir da `v0.2.3`, o produto assume uma decisão clara:
 5. Criar lote local no Room.
 6. Abrir direto em revisão.
 7. Ajustar corte/filtro apenas quando necessário.
-8. Rodar OCR por blocos ou exportar em PDF, JPG ou PNG.
+8. Rodar OCR por trechos/texto contínuo ou exportar em PDF, JPG ou PNG.
 9. Confirmar nome, tipo, tamanho, local salvo, abrir ou compartilhar.
 
 ## Fallback manual

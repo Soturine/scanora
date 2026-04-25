@@ -34,9 +34,11 @@ As coordenadas do crop são armazenadas em formato proporcional (`0..1`) em vez 
 
 A prévia de filtros não usa full-res na UI. O editor primeiro renderiza uma imagem intermediária rápida e depois substitui por uma refinada em segundo plano, com debounce, cancelamento de job e cache.
 
-## 7. OCR com imagem preparada e blocos
+## 7. OCR com imagem preparada e pós-processamento
 
-O OCR local não depende mais só do filtro final salvo da página. A base atual cria uma saída dedicada para leitura, reduz ruído visual e preserva blocos/linhas retornados pelo ML Kit para cópia rápida da página inteira ou de um bloco.
+O OCR local não depende mais só do filtro final salvo da página. A base atual cria uma saída dedicada para leitura e preserva bounding boxes de blocos/linhas retornados pelo ML Kit.
+
+Desde a `v0.2.5`, a UI deixa de tratar esses blocos crus como produto final. Um pós-processador puro em `core-common` ordena linhas por posição visual, agrupa parágrafos, reduz ruído pequeno e gera o texto consolidado usado por `Copiar tudo`. A decisão mantém ML Kit como engine, melhora a utilidade do resultado e evita levar um refactor profundo de pipeline para dentro desta fase.
 
 ## 8. Exportação local mais encontrável
 

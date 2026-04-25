@@ -751,6 +751,13 @@ private fun SelectedPageCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    if (!page.ocrText.isNullOrBlank()) {
+                        Text(
+                            text = stringResource(id = R.string.editor_ocr_ready),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 }
                 FilledTonalButton(onClick = onOpenOcr) {
                     Text(text = stringResource(id = R.string.editor_open_ocr))

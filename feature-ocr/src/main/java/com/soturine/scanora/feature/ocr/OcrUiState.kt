@@ -1,13 +1,16 @@
 package com.soturine.scanora.feature.ocr
 
-import com.soturine.scanora.core.common.model.OcrTextBlock
+import com.soturine.scanora.core.common.model.OcrTextParagraph
+import com.soturine.scanora.core.common.model.OcrTextQuality
 import com.soturine.scanora.core.common.model.ScanPage
 
 data class OcrUiState(
     val page: ScanPage? = null,
     val previewImageUri: String? = null,
     val text: String = "",
-    val blocks: List<OcrTextBlock> = emptyList(),
+    val paragraphs: List<OcrTextParagraph> = emptyList(),
+    val quality: OcrTextQuality = OcrTextQuality.EMPTY,
+    val discardedNoiseCount: Int = 0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
 )

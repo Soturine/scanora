@@ -27,7 +27,7 @@ O projeto foi dividido em módulos para manter o app simples no MVP, mas já com
 - `feature-settings`
   Preferências locais e tela sobre.
 - `feature-ocr`
-  Reconhecimento de texto e cópia rápida.
+  Reconhecimento de texto, revisão por trechos e cópia rápida.
 
 ## Fluxo de dados
 
@@ -62,7 +62,9 @@ Antes de criar um lote no Room, imagens vindas do scanner rápido, galeria ou Ca
 
 ## OCR
 
-O OCR local continua em ML Kit Text Recognition, mas a imagem enviada para reconhecimento não depende mais apenas do filtro salvo da página. A base atual prepara uma versão específica para leitura antes de chamar a engine e preserva a estrutura de blocos e linhas retornada pelo ML Kit para a UI mostrar texto copiável por bloco ou por página inteira.
+O OCR local continua em ML Kit Text Recognition, mas a imagem enviada para reconhecimento não depende mais apenas do filtro salvo da página. A base atual prepara uma versão específica para leitura antes de chamar a engine, preserva bounding boxes de blocos/linhas e aplica um pós-processamento puro em `core-common`.
+
+Esse pós-processamento ordena linhas por posição visual, agrupa linhas próximas em parágrafos, descarta ruídos pequenos quando são claramente inúteis e gera um texto consolidado para `Copiar tudo`. A UI de OCR não precisa renderizar o resultado bruto do ML Kit como experiência principal; ela consome trechos organizados, qualidade simples da leitura e o texto contínuo consolidado.
 
 ## Exportação
 

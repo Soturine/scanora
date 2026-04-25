@@ -4,12 +4,14 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.Rect
 import android.net.Uri
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.soturine.scanora.core.common.model.OcrTextBlock
+import com.soturine.scanora.core.common.model.OcrTextBounds
 import com.soturine.scanora.core.common.model.OcrTextLine
 import com.soturine.scanora.core.common.model.OcrTextResult
 import com.soturine.scanora.core.common.repository.OcrRepository
@@ -23,7 +25,7 @@ class DefaultOcrRepository(
     private val context: Context,
 ) : OcrRepository {
     override suspend fun recognizeText(imageUri: String): OcrTextResult = withContext(Dispatchers.IO) {
-        val bitmap = loadBitmap(imageUri, maxDimension = 2200) ?: return@withContext OcrTextResult.Empty
+        val bitmap = loadBitmap(imageUri, maxDimension = 2600) ?: return@withContext OcrTextResult.Empty
         val prepared = prepareForOcr(bitmap)
         val inputImage = InputImage.fromBitmap(prepared, 0)
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
@@ -70,15 +72,33 @@ class DefaultOcrRepository(
                     .mapNotNull { line ->
                         line.text.trim()
                             .takeIf(String::isNotBlank)
-                            ?.let(::OcrTextLine)
+                            ?.let { text ->
+                                OcrTextLine(
+                                    text = text,
+                                    bounds = line.boundingBox?.toOcrTextBounds(),
+                                )
+                            }
                     }
-                lines.takeIf { it.isNotEmpty() }?.let(::OcrTextBlock)
+                lines.takeIf { it.isNotEmpty() }?.let { recognizedLines ->
+                    OcrTextBlock(
+                        lines = recognizedLines,
+                        bounds = block.boundingBox?.toOcrTextBounds(),
+                    )
+                }
             }
         return OcrTextResult(
             blocks = blocks,
             fallbackText = result.text.trim(),
         )
     }
+
+    private fun Rect.toOcrTextBounds(): OcrTextBounds =
+        OcrTextBounds(
+            left = left,
+            top = top,
+            right = right,
+            bottom = bottom,
+        )
 
     private fun toGrayscale(bitmap: Bitmap): Bitmap {
         val width = bitmap.width

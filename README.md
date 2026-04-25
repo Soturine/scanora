@@ -3,7 +3,7 @@
 ![Android](https://img.shields.io/badge/platform-Android-2E7D8C)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-23414B)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-DD8A2E)
-![Version](https://img.shields.io/badge/version-0.2.4-133942)
+![Version](https://img.shields.io/badge/version-0.2.5-133942)
 [![Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml)
 [![Deploy Pages](https://github.com/Soturine/scanora/actions/workflows/pages.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/pages.yml)
 
@@ -24,7 +24,7 @@ Site: https://soturine.github.io/scanora/
 - sugestão inicial de crop mais robusta para fotos inclinadas, galeria e fundos poluídos;
 - reajuste automático do crop e editor manual mais confortável para acertos finos;
 - filtros locais recalibrados para documento, cinza, cor e recibo com menos risco de estourar a página;
-- OCR local com imagem preparada, leitura por blocos e `Copiar tudo` em destaque;
+- OCR local com imagem preparada, trechos organizados, texto contínuo consolidado e `Copiar tudo` em destaque;
 - exportação em PDF, JPG e PNG com escolha progressiva entre PDF e Imagem;
 - pós-exportação com nome, tipo, tamanho, local salvo, abrir e compartilhar;
 - histórico local com título, tags, favoritos e busca.
@@ -41,7 +41,7 @@ Nesta rodada, o material público foi alinhado ao fluxo real do produto sem subs
 ## Stack
 
 - Kotlin
-- Android Gradle Plugin 9.1.0
+- Android Gradle Plugin 9.1.1
 - Jetpack Compose + Material 3
 - Navigation Compose
 - ViewModel + Coroutines + Flow
@@ -70,7 +70,7 @@ Referências técnicas:
 
 ## Como rodar
 
-1. Abra o projeto no Android Studio com suporte a AGP 9.1.
+1. Abra o projeto no Android Studio com suporte a AGP 9.1.1.
 2. Use JDK 17 ou superior compatível com AGP 9.
 3. Instale Android SDK Platform 36 e Build Tools 36.0.0.
 4. Rode `./gradlew assembleDebug` ou execute o módulo `app`.
@@ -96,7 +96,7 @@ Política completa em [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 ## Status
 
-`0.2.4` deixa o app mais minimalista e com identidade própria: Home mais direta, scanner rápido como CTA absoluto, sem escolha antecipada de tipo, onboarding visual com a raposa mascote e novo ícone do launcher. As próximas fases documentadas são `0.2.5` para OCR manual confiável e `0.2.6` para fidelidade da imagem e pipeline único.
+`0.2.5` torna o OCR manual/importado mais útil: o app ordena linhas por posição visual, agrupa trechos em parágrafos, reduz ruído pequeno e faz `Copiar tudo` usar uma saída consolidada. A próxima fase documentada é `0.2.6` para fidelidade da imagem e pipeline único.
 
 ## Contribuir
 

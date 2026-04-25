@@ -47,7 +47,9 @@ class OcrViewModel(
             page = page,
             previewImageUri = previewUri ?: page?.displayUri,
             text = resolvedResult.fullText,
-            blocks = resolvedResult.blocks,
+            paragraphs = resolvedResult.paragraphs,
+            quality = resolvedResult.quality,
+            discardedNoiseCount = resolvedResult.processedText.discardedNoiseCount,
             isLoading = loading,
             errorMessage = message,
         )

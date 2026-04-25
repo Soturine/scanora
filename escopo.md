@@ -2,9 +2,9 @@
 
 ## Fonte principal desta fase
 
-Este arquivo é a referência de produto para a evolução do Scanora após a `v0.2.3`.
+Este arquivo é a referência de produto para a evolução do Scanora após a `v0.2.5`.
 
-A `v0.2.3` consolidou o pós-scan com OCR por blocos, exportação progressiva e revisão menos poluída. A partir daqui, o foco deixa de ser adicionar muitas funções e passa a ser transformar o Scanora em um app mais limpo, confiável, coerente e com identidade própria.
+A `v0.2.5` consolidou o OCR manual/importado com pós-processamento, texto organizado por trechos e cópia consolidada. A partir daqui, o foco segue em confiabilidade visual, coerência do pipeline e qualidade percebida sem adicionar complexidade antes da hora.
 
 O scanner rápido do Google/ML Kit Document Scanner continua sendo o caminho principal de entrada. O modo manual continua existindo como fallback editável para casos em que o usuário precisa controlar corte, rotação, filtro e OCR página por página.
 
@@ -99,7 +99,7 @@ O modo manual é importante, mas não deve parecer o caminho principal. Ele deve
 
 ---
 
-# Entregue até v0.2.4
+# Entregue até v0.2.5
 
 ## v0.2.2 — Scanner rápido no centro
 
@@ -228,11 +228,26 @@ Atualizar quando aplicável:
 
 # v0.2.5 — OCR manual confiável
 
+**Status:** entregue em 2026-04-25.
+
 ## Objetivo
 
 Tornar o OCR do fluxo manual/importado realmente útil, evitando texto quebrado em blocos minúsculos e melhorando a leitura copiável.
 
-A `v0.2.3` estruturou OCR por blocos. A `v0.2.5` deve ir além: consolidar texto, agrupar linhas e reduzir ruído.
+A `v0.2.3` estruturou OCR por blocos. A `v0.2.5` foi além: consolidou texto, agrupou linhas e reduziu ruído.
+
+---
+
+## Implementado na v0.2.5
+
+- Resultado de OCR passou a preservar bounding boxes de blocos e linhas do ML Kit.
+- Pós-processamento puro em `core-common` ordena linhas por posição visual, agrupa parágrafos e reduz ruídos pequenos.
+- O modelo de OCR expõe texto consolidado, trechos/parágrafos, qualidade simples e contagem de ruído descartado.
+- `Copiar tudo` usa o texto consolidado pós-processado.
+- Tela de OCR ganhou visualização por `Trechos` e `Texto contínuo`, com microcopy mais curta.
+- Cópia por trecho substitui a lógica visual de copiar blocos crus.
+- Revisão mostra `OCR pronto` de forma discreta quando a página já tem texto salvo.
+- Testes unitários cobrem ordenação, agrupamento, remoção de ruído e consolidação.
 
 ---
 
@@ -376,7 +391,7 @@ Validar pelo menos estes cenários:
 
 # Fora do escopo imediato
 
-Até estabilizar `v0.2.4`, `v0.2.5` e `v0.2.6`, evitar:
+Até estabilizar `v0.2.6`, evitar:
 
 - OpenCV;
 - backend;

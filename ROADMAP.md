@@ -206,15 +206,34 @@ Este roadmap prioriza estabilidade, usabilidade e qualidade real do fluxo de esc
 
 ---
 
+## v0.2.5 — OCR manual confiável
+
+**Status:** concluída em 2026-04-25
+
+**Objetivo:** tornar o OCR do fluxo manual/importado mais útil, legível e copiável sem trocar a engine local nem refatorar o pipeline de imagem.
+
+### Entregue
+
+- pós-processamento puro de OCR em `core-common`, com ordenação por posição visual;
+- agrupamento de linhas próximas em parágrafos/trechos úteis;
+- redução de ruído pequeno e fragmentos claramente inúteis;
+- texto consolidado usado por `Copiar tudo`;
+- tela de OCR com alternância discreta entre `Trechos` e `Texto contínuo`;
+- estados mais curtos para carregando, vazio, leitura parcial e texto pronto;
+- preservação de bounding boxes do ML Kit em `core-data`;
+- indicação discreta de `OCR pronto` na revisão quando a página já tem texto salvo;
+- testes unitários para ordenação, agrupamento, ruído e consolidação.
+
+### Resultado esperado desta release
+
+- OCR manual/importado deixa de explodir em dezenas de cards pequenos;
+- o usuário consegue copiar uma versão mais útil do texto em um toque;
+- a tela de OCR fica mais parecida com ferramenta de revisão do que debug da engine;
+- `v0.2.6` segue reservada para alinhar preview, filtro, OCR e exportação no pipeline único.
+
+---
+
 ## Próximas fases
-
-### v0.2.5 — OCR manual confiável
-
-- pós-processamento de OCR manual;
-- agrupamento de linhas em parágrafos;
-- texto contínuo mais útil para copiar;
-- redução de ruído e quebras artificiais;
-- melhoria da utilidade do OCR sem trocar a engine principal.
 
 ### v0.2.6 — Fidelidade da imagem e pipeline único
 

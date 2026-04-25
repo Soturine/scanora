@@ -54,4 +54,5 @@
     <string name="editor_move_up">Mover para cima</string>
     <string name="editor_move_down">Mover para baixo</string>
     <string name="editor_open_ocr">Abrir OCR</string>
+    <string name="editor_ocr_ready">OCR pronto</string>
 </resources>

@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -19,6 +19,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -32,18 +33,28 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import com.soturine.scanora.core.common.model.OcrTextBlock
+import com.soturine.scanora.core.common.model.OcrTextParagraph
+import com.soturine.scanora.core.common.model.OcrTextQuality
 import com.soturine.scanora.core.ui.component.AsyncUriImage
 import com.soturine.scanora.core.ui.component.EmptyStateCard
-import com.soturine.scanora.core.ui.component.SectionHeader
 import kotlinx.coroutines.launch
+
+private enum class OcrViewMode {
+    Paragraphs,
+    Continuous,
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,8 +69,9 @@ fun OcrScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val copySuccessMessage = stringResource(id = R.string.ocr_copy_success)
-    val blocks = state.blocks
     val readableText = remember(state.text) { state.text.trim() }
+    val hasReadableText = readableText.isNotBlank()
+    var selectedView by rememberSaveable { mutableStateOf(OcrViewMode.Paragraphs) }
 
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
@@ -104,7 +116,7 @@ fun OcrScreen(
                                     snackbarHostState.showSnackbar(copySuccessMessage)
                                 }
                             },
-                            enabled = readableText.isNotBlank() && !state.isLoading,
+                            enabled = hasReadableText && !state.isLoading,
                         ) {
                             Text(text = stringResource(id = R.string.ocr_copy_all))
                         }
@@ -135,89 +147,49 @@ fun OcrScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 item {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        ),
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(18.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            SectionHeader(
-                                eyebrow = stringResource(id = R.string.ocr_eyebrow),
-                                title = if (state.isLoading) {
-                                    stringResource(id = R.string.ocr_processing)
-                                } else {
-                                    stringResource(id = R.string.ocr_result_title)
-                                },
-                                supportingText = if (state.isLoading && blocks.isEmpty()) {
-                                    stringResource(id = R.string.ocr_processing_detail)
-                                } else {
-                                    stringResource(id = R.string.ocr_supporting, blocks.size)
-                                },
-                            )
-                            AsyncUriImage(
-                                imageUri = state.previewImageUri ?: state.page.displayUri,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(216.dp),
-                                maxDimension = 1700,
-                            )
-                        }
+                    OcrHeaderCard(state = state)
+                }
+                if (state.quality == OcrTextQuality.WEAK && hasReadableText && !state.isLoading) {
+                    item {
+                        WeakOcrNotice()
                     }
                 }
-                if (blocks.isEmpty() && !state.isLoading) {
+                if (hasReadableText) {
+                    item {
+                        OcrViewModeSelector(
+                            selectedView = selectedView,
+                            onSelectedViewChange = { selectedView = it },
+                        )
+                    }
+                    when (selectedView) {
+                        OcrViewMode.Paragraphs -> {
+                            itemsIndexed(state.paragraphs) { index, paragraph ->
+                                OcrParagraphCard(
+                                    index = index,
+                                    paragraph = paragraph,
+                                    onCopy = {
+                                        clipboardManager.setText(AnnotatedString(paragraph.text))
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar(copySuccessMessage)
+                                        }
+                                    },
+                                )
+                            }
+                        }
+                        OcrViewMode.Continuous -> {
+                            item {
+                                ContinuousTextCard(text = readableText)
+                            }
+                        }
+                    }
+                } else if (!state.isLoading) {
                     item {
                         EmptyStateCard(
                             title = stringResource(id = R.string.ocr_empty_title),
                             message = stringResource(id = R.string.ocr_empty_text),
-                        )
-                    }
-                } else if (blocks.isEmpty()) {
-                    item {
-                        Card {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(18.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                Text(
-                                    text = stringResource(id = R.string.ocr_blocks_title),
-                                    style = MaterialTheme.typography.titleMedium,
-                                )
-                                Text(
-                                    text = stringResource(id = R.string.ocr_processing_detail),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    item {
-                        SectionHeader(
-                            eyebrow = stringResource(id = R.string.ocr_blocks_eyebrow),
-                            title = stringResource(id = R.string.ocr_blocks_title),
-                            supportingText = stringResource(id = R.string.ocr_blocks_supporting),
-                        )
-                    }
-                    itemsIndexed(blocks) { index, block ->
-                        RecognizedTextBlockCard(
-                            index = index,
-                            block = block,
-                            onCopy = {
-                                clipboardManager.setText(AnnotatedString(block.text))
-                                coroutineScope.launch {
-                                    snackbarHostState.showSnackbar(copySuccessMessage)
-                                }
-                            },
                         )
                     }
                 }
@@ -227,9 +199,109 @@ fun OcrScreen(
 }
 
 @Composable
-private fun RecognizedTextBlockCard(
+private fun OcrHeaderCard(
+    state: OcrUiState,
+    modifier: Modifier = Modifier,
+) {
+    val title = when {
+        state.isLoading -> stringResource(id = R.string.ocr_processing)
+        state.quality == OcrTextQuality.EMPTY -> stringResource(id = R.string.ocr_empty_title)
+        state.quality == OcrTextQuality.WEAK -> stringResource(id = R.string.ocr_weak_title)
+        else -> stringResource(id = R.string.ocr_result_title)
+    }
+    val supportingText = when {
+        state.isLoading -> stringResource(id = R.string.ocr_processing_detail)
+        state.quality == OcrTextQuality.EMPTY -> stringResource(id = R.string.ocr_empty_text)
+        state.quality == OcrTextQuality.WEAK -> stringResource(id = R.string.ocr_weak_text)
+        else -> stringResource(id = R.string.ocr_supporting, state.paragraphs.size)
+    }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            AsyncUriImage(
+                imageUri = state.previewImageUri ?: state.page?.displayUri.orEmpty(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(168.dp),
+                contentScale = ContentScale.Fit,
+                maxDimension = 1700,
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = stringResource(id = R.string.ocr_eyebrow),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = supportingText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WeakOcrNotice(
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        shape = MaterialTheme.shapes.medium,
+    ) {
+        Text(
+            text = stringResource(id = R.string.ocr_weak_hint),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
+}
+
+@Composable
+private fun OcrViewModeSelector(
+    selectedView: OcrViewMode,
+    onSelectedViewChange: (OcrViewMode) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        FilterChip(
+            selected = selectedView == OcrViewMode.Paragraphs,
+            onClick = { onSelectedViewChange(OcrViewMode.Paragraphs) },
+            label = { Text(text = stringResource(id = R.string.ocr_view_paragraphs)) },
+        )
+        FilterChip(
+            selected = selectedView == OcrViewMode.Continuous,
+            onClick = { onSelectedViewChange(OcrViewMode.Continuous) },
+            label = { Text(text = stringResource(id = R.string.ocr_view_continuous)) },
+        )
+    }
+}
+
+@Composable
+private fun OcrParagraphCard(
     index: Int,
-    block: OcrTextBlock,
+    paragraph: OcrTextParagraph,
     onCopy: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -250,24 +322,53 @@ private fun RecognizedTextBlockCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = stringResource(id = R.string.ocr_block_label, index + 1),
+                    text = stringResource(id = R.string.ocr_paragraph_label, index + 1),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 OutlinedButton(onClick = onCopy) {
-                    Text(text = stringResource(id = R.string.ocr_copy_block))
+                    Text(text = stringResource(id = R.string.ocr_copy_excerpt))
                 }
             }
             SelectionContainer {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    block.lines.forEach { line ->
-                        Text(
-                            text = line.text,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                }
+                Text(
+                    text = paragraph.text,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContinuousTextCard(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                text = stringResource(id = R.string.ocr_continuous_title),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            SelectionContainer {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
             }
         }
     }
