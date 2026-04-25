@@ -4,12 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.soturine.scanora.core.common.model.DocumentFilterType
 import com.soturine.scanora.core.common.model.DocumentQuad
-import com.soturine.scanora.core.common.model.PointValue
+import com.soturine.scanora.core.common.model.ImagePipelineSpec
+import com.soturine.scanora.core.common.model.PageRenderPurpose
 import com.soturine.scanora.core.common.model.ScanPage
+import com.soturine.scanora.core.common.model.requiresDerivedImage
+import com.soturine.scanora.core.common.model.withInvalidatedDerivedImage
 import com.soturine.scanora.core.common.repository.DocumentProcessingRepository
 import com.soturine.scanora.core.common.repository.ScanRepository
 import com.soturine.scanora.core.common.usecase.ValidateDocumentNameUseCase
-import java.util.Locale
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -108,7 +110,7 @@ class EditorViewModel(
                 val suggestedQuad = processingRepository.estimateDocumentQuad(page.sourceUri)
                 scanRepository.updatePage(
                     scanId = scanId,
-                    page = page.copy(quad = suggestedQuad),
+                    page = page.copy(quad = suggestedQuad).withInvalidatedDerivedImage(),
                 )
             }.onFailure { throwable ->
                 if (throwable !is CancellationException) {
@@ -119,7 +121,10 @@ class EditorViewModel(
         }
     }
 
-    fun updateQuad(quad: DocumentQuad) {
+    fun updateQuad(
+        quad: DocumentQuad,
+        onSaved: (() -> Unit)? = null,
+    ) {
         val page = uiState.value.currentPage ?: return
         previewJob?.cancel()
         isPreviewLoading.value = false
@@ -127,7 +132,11 @@ class EditorViewModel(
         previewImageUri.value = null
         previewCache.clear()
         viewModelScope.launch {
-            scanRepository.updatePage(scanId, page.copy(quad = quad))
+            scanRepository.updatePage(
+                scanId = scanId,
+                page = page.copy(quad = quad).withInvalidatedDerivedImage(),
+            )
+            onSaved?.invoke()
         }
     }
 
@@ -145,13 +154,6 @@ class EditorViewModel(
         val targetDimension = previewLongSide.coerceIn(1400, 1800)
         val quickDimension = (targetDimension * 0.74f).toInt().coerceIn(1120, 1400)
         val currentDisplayUri = page.displayUri
-
-        if (filterType == page.filterType && page.processedUri != null) {
-            previewImageUri.value = currentDisplayUri
-            isPreviewLoading.value = false
-            isPreviewRefining.value = false
-            return
-        }
 
         val refinedCacheKey = buildPreviewCacheKey(page, filterType, targetDimension)
         previewCache[refinedCacheKey]?.let { cachedPreview ->
@@ -211,6 +213,50 @@ class EditorViewModel(
         }
     }
 
+    fun prepareCurrentPagePreview(previewLongSide: Int) {
+        val page = uiState.value.currentPage ?: return
+        val targetDimension = previewLongSide.coerceIn(1400, 1800)
+        previewJob?.cancel()
+
+        if (!page.requiresDerivedImage()) {
+            previewImageUri.value = page.canonicalUri
+            isPreviewLoading.value = false
+            isPreviewRefining.value = false
+            return
+        }
+
+        val cacheKey = buildPreviewCacheKey(page, page.filterType, targetDimension)
+        previewCache[cacheKey]?.let { cachedPreview ->
+            previewImageUri.value = cachedPreview
+            isPreviewLoading.value = false
+            isPreviewRefining.value = false
+            return
+        }
+
+        isPreviewLoading.value = true
+        isPreviewRefining.value = false
+        previewJob = viewModelScope.launch {
+            errorMessage.value = null
+            runCatching {
+                val preview = processingRepository.renderPreview(
+                    sourceUri = page.sourceUri,
+                    filterType = page.filterType,
+                    quad = page.quad,
+                    rotationDegrees = page.rotationDegrees,
+                    maxDimension = targetDimension,
+                )
+                previewCache[cacheKey] = preview
+                previewImageUri.value = preview
+            }.onFailure { throwable ->
+                if (throwable !is CancellationException) {
+                    previewImageUri.value = page.displayUri
+                    errorMessage.value = throwable.message ?: "Não foi possível atualizar a prévia da página."
+                }
+            }
+            isPreviewLoading.value = false
+        }
+    }
+
     fun applyFilter(filterType: DocumentFilterType) {
         val page = uiState.value.currentPage ?: return
         previewJob?.cancel()
@@ -233,6 +279,7 @@ class EditorViewModel(
                         quad = effectiveQuad,
                         processedUri = processedUri,
                         filterType = filterType,
+                        ocrText = null,
                     ),
                 )
                 processedUri
@@ -271,6 +318,7 @@ class EditorViewModel(
                         quad = effectiveQuad,
                         processedUri = processedUri,
                         rotationDegrees = newRotation,
+                        ocrText = null,
                     ),
                 )
                 processedUri
@@ -341,7 +389,7 @@ class EditorViewModel(
         val suggestedQuad = processingRepository.estimateDocumentQuad(page.sourceUri)
         scanRepository.updatePage(
             scanId = scanId,
-            page = page.copy(quad = suggestedQuad),
+            page = page.copy(quad = suggestedQuad).withInvalidatedDerivedImage(),
         )
         return suggestedQuad
     }
@@ -350,30 +398,10 @@ class EditorViewModel(
         page: ScanPage,
         filterType: DocumentFilterType,
         maxDimension: Int,
-    ): String = buildString {
-        append(page.sourceUri)
-        append('|')
-        append(filterType.storageKey)
-        append('|')
-        append(page.rotationDegrees)
-        append('|')
-        append(maxDimension)
-        append('|')
-        append(page.quad?.cacheKey() ?: "no-quad")
-    }
-
-    private fun DocumentQuad.cacheKey(): String = buildString {
-        append(topLeft.compact())
-        append('|')
-        append(topRight.compact())
-        append('|')
-        append(bottomRight.compact())
-        append('|')
-        append(bottomLeft.compact())
-    }
-
-    private fun PointValue.compact(): String =
-        "${x.formatForCache()},${y.formatForCache()}"
-
-    private fun Float.formatForCache(): String = String.format(Locale.US, "%.4f", this)
+    ): String = ImagePipelineSpec.buildKey(
+        page = page,
+        purpose = PageRenderPurpose.PREVIEW,
+        filterType = filterType,
+        maxDimension = maxDimension,
+    ).toString()
 }

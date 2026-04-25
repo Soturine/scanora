@@ -16,6 +16,8 @@ import com.soturine.scanora.core.common.model.ExportFormat
 import com.soturine.scanora.core.common.model.PdfQuality
 import com.soturine.scanora.core.common.model.ScanDocument
 import com.soturine.scanora.core.common.model.ScanPage
+import com.soturine.scanora.core.common.model.requiresDerivedImage
+import com.soturine.scanora.core.common.repository.DocumentProcessingRepository
 import com.soturine.scanora.core.common.repository.ExportRepository
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -24,6 +26,7 @@ import kotlinx.coroutines.withContext
 
 class DefaultExportRepository(
     private val context: Context,
+    private val processingRepository: DocumentProcessingRepository,
     private val fileNameBuilder: ExportFileNameBuilder = ExportFileNameBuilder(),
 ) : ExportRepository {
     override suspend fun exportPdf(
@@ -100,10 +103,20 @@ class DefaultExportRepository(
             output.toByteArray()
         }
 
-    private fun loadBitmap(page: ScanPage): Bitmap? {
-        val uri = Uri.parse(page.displayUri)
+    private suspend fun loadBitmap(page: ScanPage): Bitmap? {
+        val finalImageUri = if (page.requiresDerivedImage()) {
+            processingRepository.processPage(
+                sourceUri = page.sourceUri,
+                filterType = page.filterType,
+                quad = page.quad,
+                rotationDegrees = page.rotationDegrees,
+            )
+        } else {
+            page.canonicalUri
+        }
+        val uri = Uri.parse(finalImageUri)
         val stream = when {
-            uri.scheme.isNullOrBlank() -> File(page.displayUri).inputStream()
+            uri.scheme.isNullOrBlank() -> File(finalImageUri).inputStream()
             else -> context.contentResolver.openInputStream(uri)
         }
         return stream?.use(BitmapFactory::decodeStream)

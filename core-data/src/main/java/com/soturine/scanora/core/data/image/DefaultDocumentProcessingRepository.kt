@@ -13,7 +13,9 @@ import android.graphics.Rect
 import android.net.Uri
 import com.soturine.scanora.core.common.model.DocumentFilterType
 import com.soturine.scanora.core.common.model.DocumentQuad
+import com.soturine.scanora.core.common.model.ImagePipelineSpec
 import com.soturine.scanora.core.common.model.PointValue
+import com.soturine.scanora.core.common.model.coerceNormalized
 import com.soturine.scanora.core.common.repository.DocumentProcessingRepository
 import java.io.File
 import java.io.FileOutputStream
@@ -83,7 +85,7 @@ class DefaultDocumentProcessingRepository(
         rotationDegrees = rotationDegrees,
         maxDimension = maxDimension,
         quality = 88,
-        prefix = "${filterType.storageKey}-preview",
+        prefix = "v${ImagePipelineSpec.VERSION}-${filterType.storageKey}-preview",
     )
 
     override suspend fun processPage(
@@ -98,7 +100,7 @@ class DefaultDocumentProcessingRepository(
         rotationDegrees = rotationDegrees,
         maxDimension = 2800,
         quality = 93,
-        prefix = filterType.storageKey,
+        prefix = "v${ImagePipelineSpec.VERSION}-${filterType.storageKey}",
     )
 
     override suspend fun processForOcr(
@@ -107,24 +109,20 @@ class DefaultDocumentProcessingRepository(
         rotationDegrees: Int,
         preferReceiptMode: Boolean,
     ): String = withContext(Dispatchers.IO) {
-        var bitmap = loadBitmap(sourceUri, maxDimension = 2600) ?: error("Não foi possível abrir a página para OCR.")
-        val normalizedRotation = normalizeRotation(rotationDegrees)
-        if (normalizedRotation != 0) {
-            bitmap = rotateBitmap(bitmap, normalizedRotation.toFloat())
-        }
-
-        val baseQuad = quad ?: estimateDocumentQuad(sourceUri)
-        val rotatedQuad = rotateQuad(baseQuad, normalizedRotation)
-        val effectiveQuad = scaleQuadToBitmap(
-            quad = rotatedQuad,
-            width = bitmap.width,
-            height = bitmap.height,
+        val geometry = renderDocumentGeometry(
+            sourceUri = sourceUri,
+            quad = quad,
+            rotationDegrees = rotationDegrees,
+            maxDimension = 2600,
         )
-        val warped = removeBlackBorders(warpPerspective(bitmap, effectiveQuad))
-        val prepared = prepareForOcr(warped, preferReceiptMode)
+        val prepared = prepareForOcr(geometry, preferReceiptMode)
         saveBitmap(
             bitmap = prepared,
-            prefix = if (preferReceiptMode) "ocr-receipt" else "ocr",
+            prefix = if (preferReceiptMode) {
+                "v${ImagePipelineSpec.VERSION}-ocr-receipt"
+            } else {
+                "v${ImagePipelineSpec.VERSION}-ocr"
+            },
             quality = 92,
         )
     }
@@ -138,21 +136,12 @@ class DefaultDocumentProcessingRepository(
         quality: Int,
         prefix: String,
     ): String = withContext(Dispatchers.IO) {
-        var bitmap = loadBitmap(sourceUri, maxDimension = maxDimension) ?: error("Não foi possível abrir a imagem.")
-        val normalizedRotation = normalizeRotation(rotationDegrees)
-        if (normalizedRotation != 0) {
-            bitmap = rotateBitmap(bitmap, normalizedRotation.toFloat())
-        }
-
-        val baseQuad = quad ?: estimateDocumentQuad(sourceUri)
-        val rotatedQuad = rotateQuad(baseQuad, normalizedRotation)
-        val effectiveQuad = scaleQuadToBitmap(
-            quad = rotatedQuad,
-            width = bitmap.width,
-            height = bitmap.height,
+        var processed = renderDocumentGeometry(
+            sourceUri = sourceUri,
+            quad = quad,
+            rotationDegrees = rotationDegrees,
+            maxDimension = maxDimension,
         )
-        var processed = warpPerspective(bitmap, effectiveQuad)
-        processed = removeBlackBorders(processed)
         processed = when (filterType) {
             DocumentFilterType.ORIGINAL_CORRECTED -> enhanceOriginal(processed)
             DocumentFilterType.DOCUMENT_BLACK_WHITE -> documentBlackWhite(processed)
@@ -166,6 +155,28 @@ class DefaultDocumentProcessingRepository(
             prefix = prefix,
             quality = quality,
         )
+    }
+
+    private fun renderDocumentGeometry(
+        sourceUri: String,
+        quad: DocumentQuad?,
+        rotationDegrees: Int,
+        maxDimension: Int,
+    ): Bitmap {
+        val bitmap = loadBitmap(sourceUri, maxDimension = maxDimension) ?: error("Não foi possível abrir a imagem.")
+        val effectiveQuad = scaleQuadToBitmap(
+            quad = (quad ?: fullPageQuad()).coerceNormalized(),
+            width = bitmap.width,
+            height = bitmap.height,
+        )
+        var processed = warpPerspective(bitmap, effectiveQuad)
+        processed = removeBlackBorders(processed)
+
+        val normalizedRotation = ImagePipelineSpec.normalizeRotation(rotationDegrees)
+        if (normalizedRotation != 0) {
+            processed = rotateBitmap(processed, normalizedRotation.toFloat())
+        }
+        return processed
     }
 
     private fun estimateQuadFromBounds(
@@ -913,33 +924,6 @@ class DefaultDocumentProcessingRepository(
         val matrix = Matrix().apply { postRotate(degrees) }
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
-
-    private fun rotateQuad(
-        quad: DocumentQuad,
-        rotationDegrees: Int,
-    ): DocumentQuad {
-        val rotations = ((rotationDegrees % 360) + 360) % 360 / 90
-
-        fun rotatePoint90(point: PointValue): PointValue =
-            PointValue(
-                x = 1f - point.y,
-                y = point.x,
-            )
-
-        var rotated = quad
-        repeat(rotations) {
-            rotated = DocumentQuad(
-                topLeft = rotatePoint90(rotated.bottomLeft),
-                topRight = rotatePoint90(rotated.topLeft),
-                bottomRight = rotatePoint90(rotated.topRight),
-                bottomLeft = rotatePoint90(rotated.bottomRight),
-            )
-        }
-        return rotated
-    }
-
-    private fun normalizeRotation(rotationDegrees: Int): Int =
-        ((rotationDegrees % 360) + 360) % 360
 
     private fun warpPerspective(
         bitmap: Bitmap,
@@ -1783,6 +1767,14 @@ class DefaultDocumentProcessingRepository(
             topRight = PointValue(0.93f, 0.07f),
             bottomRight = PointValue(0.93f, 0.93f),
             bottomLeft = PointValue(0.07f, 0.93f),
+        )
+
+    private fun fullPageQuad(): DocumentQuad =
+        DocumentQuad(
+            topLeft = PointValue(0f, 0f),
+            topRight = PointValue(1f, 0f),
+            bottomRight = PointValue(1f, 1f),
+            bottomLeft = PointValue(0f, 1f),
         )
 
     private fun fallbackRect(

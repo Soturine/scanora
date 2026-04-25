@@ -33,12 +33,15 @@ class AppContainer(
         DefaultUserPreferencesRepository(context)
     }
 
-    val exportRepository: ExportRepository by lazy {
-        DefaultExportRepository(context)
-    }
-
     val documentProcessingRepository: DocumentProcessingRepository by lazy {
         DefaultDocumentProcessingRepository(context)
+    }
+
+    val exportRepository: ExportRepository by lazy {
+        DefaultExportRepository(
+            context = context,
+            processingRepository = documentProcessingRepository,
+        )
     }
 
     val ocrRepository: OcrRepository by lazy {

@@ -38,4 +38,4 @@ $env:ANDROID_SDK_ROOT="C:\Users\rafael\AppData\Local\Android\Sdk"
 .\gradlew.bat assembleDebug testDebugUnitTest lint --no-daemon
 ```
 
-- O build de linha de comando passou nesta máquina em `2026-04-25` com a versão `0.2.5`.
+- O build de linha de comando passou nesta máquina em `2026-04-25` com a versão `0.2.6`.

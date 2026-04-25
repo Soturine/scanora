@@ -175,9 +175,10 @@ fun ScanoraNavHost(
             val state = editorViewModel.uiState.collectAsStateWithLifecycle()
             CropScreen(
                 state = state.value,
-                onSaveQuad = editorViewModel::updateQuad,
-                onContinue = {
-                    navController.navigate(ScanoraDestinations.filters(scanId, pageId))
+                onSaveQuadAndContinue = { quad ->
+                    editorViewModel.updateQuad(quad) {
+                        navController.navigate(ScanoraDestinations.filters(scanId, pageId))
+                    }
                 },
                 onEnsureQuad = editorViewModel::ensureQuadForCurrentPage,
                 onReestimate = editorViewModel::reestimateCurrentPageQuad,
@@ -231,6 +232,7 @@ fun ScanoraNavHost(
                 state = state.value,
                 onRename = editorViewModel::renameScan,
                 onUpdateTags = editorViewModel::updateTags,
+                onPreparePreview = editorViewModel::prepareCurrentPagePreview,
                 onClearMessage = editorViewModel::clearMessage,
                 onSelectPage = editorViewModel::selectPage,
                 onMovePageUp = { editorViewModel.movePage(it, -1) },

@@ -51,8 +51,12 @@ O app usa duas estratégias complementares:
   Caminho principal de captura/importação rápida quando disponível, com experiência guiada e menor atrito.
 - Pipeline local em `DefaultDocumentProcessingRepository`
   Voltado para captura manual e importação da galeria, com:
+  - `sourceUri` como fonte canônica da página;
+  - `processedUri` tratado apenas como derivado/cache visual;
+  - chave pura de pipeline em `core-common` para versionar finalidade, crop, rotação, filtro e tamanho de saída;
   - estimativa heurística de quadrilátero por bordas, brilho e amostras laterais;
   - warp de perspectiva com `Matrix.setPolyToPoly`;
+  - ordem consistente de transformação: fonte, crop/perspectiva, rotação do usuário e filtro ou preparação de OCR;
   - normalização local de iluminação;
   - filtros recalibrados para documento, cinza, colorido e recibo;
   - prévia em duas etapas com cache;
@@ -62,13 +66,13 @@ Antes de criar um lote no Room, imagens vindas do scanner rápido, galeria ou Ca
 
 ## OCR
 
-O OCR local continua em ML Kit Text Recognition, mas a imagem enviada para reconhecimento não depende mais apenas do filtro salvo da página. A base atual prepara uma versão específica para leitura antes de chamar a engine, preserva bounding boxes de blocos/linhas e aplica um pós-processamento puro em `core-common`.
+O OCR local continua em ML Kit Text Recognition, mas a imagem enviada para reconhecimento não depende de thumbnail nem de `processedUri` salvo. A base atual deriva uma versão específica para leitura a partir de `sourceUri`, crop e rotação da página, preserva bounding boxes de blocos/linhas e aplica um pós-processamento puro em `core-common`.
 
 Esse pós-processamento ordena linhas por posição visual, agrupa linhas próximas em parágrafos, descarta ruídos pequenos quando são claramente inúteis e gera um texto consolidado para `Copiar tudo`. A UI de OCR não precisa renderizar o resultado bruto do ML Kit como experiência principal; ela consome trechos organizados, qualidade simples da leitura e o texto contínuo consolidado.
 
 ## Exportação
 
-PDF, JPG e PNG continuam sendo gerados localmente. Em Android 10+ a saída vai para `Downloads/Scanora`, enquanto versões anteriores usam o armazenamento do app. A tela escolhe primeiro entre `PDF` e `Imagem`, mostra apenas opções relevantes ao formato atual e devolve metadados para a UI mostrar nome, tipo, tamanho, local salvo, abrir e compartilhar.
+PDF, JPG e PNG continuam sendo gerados localmente. Em Android 10+ a saída vai para `Downloads/Scanora`, enquanto versões anteriores usam o armazenamento do app. Quando há crop, rotação, filtro ou cache processado, a exportação rederiva a página a partir de `sourceUri` em vez de usar `displayUri` como fonte final. A tela escolhe primeiro entre `PDF` e `Imagem`, mostra apenas opções relevantes ao formato atual e devolve metadados para a UI mostrar nome, tipo, tamanho, local salvo, abrir e compartilhar.
 
 ## Dependências principais
 
@@ -92,3 +96,5 @@ PDF, JPG e PNG continuam sendo gerados localmente. Em Android 10+ a saída vai p
   o fluxo rápido cobre a maioria dos casos e o manual segue como fallback editável.
 - Coordenadas normalizadas:
   simplificam preview, edição manual e reprocessamento em diferentes resoluções.
+- `sourceUri` como fonte canônica:
+  evita que preview reduzido ou cache antigo virem base de OCR/exportação.

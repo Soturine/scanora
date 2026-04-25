@@ -2,9 +2,9 @@
 
 ## Fonte principal desta fase
 
-Este arquivo é a referência de produto para a evolução do Scanora após a `v0.2.5`.
+Este arquivo é a referência de produto para a evolução do Scanora após a `v0.2.6`.
 
-A `v0.2.5` consolidou o OCR manual/importado com pós-processamento, texto organizado por trechos e cópia consolidada. A partir daqui, o foco segue em confiabilidade visual, coerência do pipeline e qualidade percebida sem adicionar complexidade antes da hora.
+A `v0.2.6` consolidou a fidelidade da imagem e alinhou preview, filtros, OCR e exportação sobre a mesma definição lógica de página. A partir daqui, o foco segue em QA visual, material público e qualidade percebida sem adicionar complexidade antes da hora.
 
 O scanner rápido do Google/ML Kit Document Scanner continua sendo o caminho principal de entrada. O modo manual continua existindo como fallback editável para casos em que o usuário precisa controlar corte, rotação, filtro e OCR página por página.
 
@@ -99,7 +99,7 @@ O modo manual é importante, mas não deve parecer o caminho principal. Ele deve
 
 ---
 
-# Entregue até v0.2.5
+# Entregue até v0.2.6
 
 ## v0.2.2 — Scanner rápido no centro
 
@@ -311,9 +311,25 @@ Criar ou ajustar a tela de OCR para permitir:
 
 # v0.2.6 — Fidelidade da imagem e pipeline único
 
+**Status:** entregue em 2026-04-25.
+
 ## Objetivo
 
 Garantir que preview, corte, filtro, OCR, revisão e exportação trabalhem sobre a mesma definição lógica de página, evitando zoom, distorção, rotação errada ou diferença entre o que o usuário vê e o arquivo final.
+
+---
+
+## Implementado na v0.2.6
+
+- `sourceUri` permanece como fonte canônica; `processedUri` é tratado como derivado/cache visual, não como verdade final.
+- Chave pura do pipeline em `core-common` versiona finalidade, fonte, crop normalizado, rotação, filtro e tamanho de saída.
+- Renderização local passou a usar a ordem: carregar fonte, aplicar crop/perspectiva salvo, remover bordas pretas, aplicar rotação do usuário e então filtro/OCR.
+- Ausência de crop salvo agora significa página inteira, evitando crop implícito sobre imagens já tratadas pelo scanner rápido.
+- Exportação rederiva PDF/JPG/PNG da fonte canônica quando há crop, rotação, filtro ou cache processado salvo.
+- Revisão prepara prévia canônica da página selecionada e filtros não confiam mais em `processedUri` antigo para decidir o enquadramento.
+- Mudanças de crop, reestimativa, filtro e rotação invalidam `processedUri` e OCR salvo quando a base visual muda.
+- Imagens de documento usam `ContentScale.Fit` por padrão e o cache visual da UI inclui carimbo de arquivo local.
+- Testes unitários cobrem normalização de rotação/crop, chaves de preview/OCR/exportação e invalidação de derivados.
 
 ---
 
@@ -324,7 +340,7 @@ Garantir que preview, corte, filtro, OCR, revisão e exportação trabalhem sobr
 Cada página deve ter um modelo claro com informações suficientes para reconstruir o resultado:
 
 - `sourceUri`;
-- tamanho original da imagem;
+- tamanho da imagem decodificado sob demanda quando necessário;
 - pontos de crop normalizados;
 - rotação;
 - filtro selecionado;
@@ -391,7 +407,7 @@ Validar pelo menos estes cenários:
 
 # Fora do escopo imediato
 
-Até estabilizar `v0.2.6`, evitar:
+Após a `v0.2.6`, ainda evitar até haver necessidade real:
 
 - OpenCV;
 - backend;

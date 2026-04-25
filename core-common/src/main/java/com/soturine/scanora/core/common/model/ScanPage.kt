@@ -11,7 +11,13 @@ data class ScanPage(
     val quad: DocumentQuad? = null,
     val ocrText: String? = null,
 ) {
-    val displayUri: String
+    val canonicalUri: String
+        get() = sourceUri
+
+    val previewUri: String
         get() = processedUri ?: sourceUri
+
+    val displayUri: String
+        get() = previewUri
 }
 

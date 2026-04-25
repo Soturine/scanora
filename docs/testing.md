@@ -7,8 +7,9 @@
 - busca por título e tags;
 - construção de nomes de arquivo para exportação;
 - pós-processamento de OCR: ordenação visual, agrupamento em parágrafos, descarte de ruído e texto consolidado;
+- regras puras do pipeline de imagem: normalização de rotação/crop, chaves de preview/OCR/exportação, seleção de fonte derivada e invalidação de cache visual;
 - teste instrumentado mínimo de inicialização da UI;
-- build `assembleDebug`, `testDebugUnitTest` e `lint` validados localmente na entrega `0.2.5`.
+- build `assembleDebug`, `testDebugUnitTest` e `lint` validados localmente na entrega `0.2.6`.
 
 ## O que ainda falta
 
@@ -26,6 +27,30 @@
 - foto torta ou importada da galeria;
 - página com pouco texto;
 - imagem sem texto detectável.
+
+## Cenários de pipeline de imagem para QA manual
+
+- scan rápido de folha A4;
+- importação de galeria;
+- caderno com espiral;
+- manuscrito;
+- tela de notebook fotografada;
+- recibo;
+- imagem girada;
+- fundo poluído;
+- crop manual alterado antes dos filtros;
+- filtro alterado depois do crop;
+- OCR depois de ajustar crop/filtro;
+- exportação e compartilhamento depois de OCR.
+
+Verificações principais:
+
+- revisão e filtros mostram o mesmo enquadramento;
+- OCR lê a página aprovada, não uma thumbnail;
+- PDF/JPG/PNG exportado bate com a revisão;
+- não há zoom inesperado por `ContentScale.Crop`;
+- rotação é aplicada uma vez só;
+- alteração de crop, rotação ou filtro invalida o derivado visual anterior.
 
 ## Como rodar
 

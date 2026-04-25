@@ -44,6 +44,14 @@ Desde a `v0.2.5`, a UI deixa de tratar esses blocos crus como produto final. Um 
 
 PDF, JPG e PNG seguem locais, mas a base atual usa `Downloads/Scanora` em Android 10+ para resolver o problema prático de “exportei e não achei o arquivo”. A UI escolhe primeiro entre `PDF` e `Imagem`, revela apenas opções relevantes e mostra nome, tipo, tamanho, local salvo, abrir e compartilhar depois de gerar.
 
-## 9. Sem Firebase no MVP
+## 9. Fonte canônica da página
+
+Desde a `v0.2.6`, `sourceUri` é a base canônica da página. `processedUri` continua existindo para acelerar/mostrar derivados visuais, mas não é mais tratado como fonte final para exportação quando há estado lógico suficiente para reconstruir a página.
+
+O pipeline local usa uma ordem explícita: carregar fonte, aplicar crop/perspectiva salvo, remover bordas pretas, aplicar rotação do usuário e então aplicar filtro ou preparar OCR. Ausência de crop salvo significa página inteira, o que evita recortar de novo imagens já tratadas pelo scanner rápido.
+
+Essa decisão preserva a arquitetura atual, evita uma migração Room complexa nesta rodada e deixa `v0.3.0+` com uma base mais previsível para QA visual, thumbnails e eventuais melhorias de cache.
+
+## 10. Sem Firebase no MVP
 
 Foi uma decisão consciente para manter o escopo honesto, offline e sem dependências de backend antes da hora.

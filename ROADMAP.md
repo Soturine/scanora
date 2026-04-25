@@ -229,18 +229,52 @@ Este roadmap prioriza estabilidade, usabilidade e qualidade real do fluxo de esc
 - OCR manual/importado deixa de explodir em dezenas de cards pequenos;
 - o usuário consegue copiar uma versão mais útil do texto em um toque;
 - a tela de OCR fica mais parecida com ferramenta de revisão do que debug da engine;
-- `v0.2.6` segue reservada para alinhar preview, filtro, OCR e exportação no pipeline único.
+- a fase seguinte entregou o alinhamento entre preview, filtro, OCR e exportação no pipeline único.
+
+---
+
+## v0.2.6 — Fidelidade da imagem e pipeline único
+
+**Status:** concluída em 2026-04-25
+
+**Objetivo:** alinhar preview, crop, filtros, OCR, revisão, exportação e compartilhamento sobre a mesma definição lógica de página.
+
+### Entregue
+
+- `sourceUri` tratado como base canônica e `processedUri` como derivado/cache visual;
+- chave pura do pipeline em `core-common`, versionando finalidade, crop, rotação, filtro e tamanho;
+- renderização local com ordem consistente: fonte, crop/perspectiva, rotação do usuário e filtro/OCR;
+- exportação rederivada da fonte canônica quando existe transformação local;
+- revisão da página selecionada usando prévia canônica e `ContentScale.Fit`;
+- invalidação de derivado visual e OCR quando crop, reestimativa, filtro ou rotação mudam;
+- testes unitários para normalização, chave de cache/pipeline e invalidação.
+
+### Resultado esperado desta release
+
+- revisão, filtros, OCR e exportação ficam mais coerentes entre si;
+- o arquivo final deixa de depender de thumbnail ou `processedUri` obsoleto;
+- scanner rápido continua como caminho principal sem crop local implícito;
+- o pipeline fica mais previsível para evoluções futuras.
 
 ---
 
 ## Próximas fases
 
-### v0.2.6 — Fidelidade da imagem e pipeline único
+### v0.3.0 — QA visual e material público
 
-- unificação do pipeline de imagem;
-- fonte única da verdade para `sourceUri`, crop, rotação, filtro, preview, OCR e exportação;
-- maior coerência entre o que o usuário vê, edita, reconhece por OCR e exporta;
-- refinamento de fidelidade visual sem adicionar biblioteca pesada antes da necessidade real.
+- QA visual em aparelho real.
+- Capturas oficiais para README e site.
+- Ajustes finais de responsividade.
+- Revisão de microcopy.
+- Preparação de release pública mais apresentável.
+
+### v0.3.1 — Performance percebida
+
+- Avaliar Baseline Profiles.
+- Melhorar abertura fria.
+- Reduzir jank em navegação.
+- Melhorar cache de thumbnails.
+- Medir gargalos reais em aparelho mediano.
 
 ### Candidatos para fases futuras
 

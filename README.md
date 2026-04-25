@@ -3,7 +3,7 @@
 ![Android](https://img.shields.io/badge/platform-Android-2E7D8C)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-23414B)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-DD8A2E)
-![Version](https://img.shields.io/badge/version-0.2.5-133942)
+![Version](https://img.shields.io/badge/version-0.2.6-133942)
 [![Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml)
 [![Deploy Pages](https://github.com/Soturine/scanora/actions/workflows/pages.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/pages.yml)
 
@@ -24,6 +24,7 @@ Site: https://soturine.github.io/scanora/
 - sugestão inicial de crop mais robusta para fotos inclinadas, galeria e fundos poluídos;
 - reajuste automático do crop e editor manual mais confortável para acertos finos;
 - filtros locais recalibrados para documento, cinza, cor e recibo com menos risco de estourar a página;
+- pipeline de imagem unificado para preview, filtros, OCR e exportação derivarem da mesma página lógica;
 - OCR local com imagem preparada, trechos organizados, texto contínuo consolidado e `Copiar tudo` em destaque;
 - exportação em PDF, JPG e PNG com escolha progressiva entre PDF e Imagem;
 - pós-exportação com nome, tipo, tamanho, local salvo, abrir e compartilhar;
@@ -96,7 +97,7 @@ Política completa em [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 ## Status
 
-`0.2.5` torna o OCR manual/importado mais útil: o app ordena linhas por posição visual, agrupa trechos em parágrafos, reduz ruído pequeno e faz `Copiar tudo` usar uma saída consolidada. A próxima fase documentada é `0.2.6` para fidelidade da imagem e pipeline único.
+`0.2.6` consolida a fidelidade da imagem: preview, filtros, OCR e exportação passam a derivar da mesma definição lógica de página, reduzindo risco de zoom, crop duplicado, rotação divergente ou arquivo final diferente da revisão. A próxima fase documentada é `0.3.0` para QA visual e material público.
 
 ## Contribuir
 

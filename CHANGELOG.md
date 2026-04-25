@@ -4,6 +4,29 @@ Este projeto segue Semantic Versioning e recomenda Conventional Commits no fluxo
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-04-25
+
+### Added
+
+- Modelo puro de chave do pipeline em `core-common`, com versão de algoritmo, finalidade, fonte, crop, rotação, filtro e tamanho de saída.
+- Testes unitários para normalização de rotação/crop, seleção de derivado, invalidação de imagem processada e chaves de preview/OCR/exportação.
+
+### Changed
+
+- Pipeline local agora aplica crop/perspectiva a partir do `sourceUri` canônico, depois rotação do usuário e só então filtro ou preparação de OCR.
+- Exportação deixou de usar `displayUri` como fonte final e passa a rederivar PDF/JPG/PNG da página canônica quando existe crop, rotação, filtro ou cache processado.
+- OCR continua usando a saída textual da `v0.2.5`, mas agora recebe a mesma geometria lógica da página aprovada.
+- Revisão passa a preparar uma prévia canônica da página selecionada, sem confiar cegamente em `processedUri` antigo.
+- Imagens de documento em componentes compartilhados usam `ContentScale.Fit` por padrão para evitar percepção de zoom/corte.
+- Versão do app foi alinhada para `0.2.6` com `versionCode` 13.
+
+### Fixed
+
+- Risco de exportar arquivo diferente da revisão por uso de `processedUri` obsoleto.
+- Risco de OCR/exportação aplicar crop implícito quando a página não tinha crop salvo, especialmente em resultados já tratados pelo scanner rápido.
+- Race em que o usuário podia sair do crop antes de persistir o quadrilátero manual.
+- Cache visual da UI sem carimbo de arquivo local, que podia manter bitmap antigo no mesmo URI.
+
 ## [0.2.5] - 2026-04-25
 
 ### Added

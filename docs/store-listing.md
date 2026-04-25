@@ -42,6 +42,7 @@ Produtividade
 - modo manual e importação direta como fallback discreto para ajuste fino;
 - identidade visual com raposa mascote e novo ícone do app;
 - OCR local com texto consolidado, trechos organizados e cópia rápida;
+- preview, filtros, OCR e exportação alinhados sobre a mesma página lógica;
 - foco em privacidade;
 - organização local por título, tags e favoritos;
 - fluxo rápido de captura até exportação, com estado final claro para abrir ou compartilhar.

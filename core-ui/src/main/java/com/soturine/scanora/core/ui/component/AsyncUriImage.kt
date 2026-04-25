@@ -31,7 +31,7 @@ import kotlinx.coroutines.withContext
 fun AsyncUriImage(
     imageUri: String?,
     modifier: Modifier = Modifier,
-    contentScale: ContentScale = ContentScale.Crop,
+    contentScale: ContentScale = ContentScale.Fit,
     maxDimension: Int = 2048,
     rotationDegrees: Float = 0f,
     onBitmapLoaded: ((IntSize) -> Unit)? = null,
@@ -74,9 +74,9 @@ private fun decodeBitmapForPreview(
     maxDimension: Int,
 ): Bitmap? {
     if (imageUri.isBlank()) return null
-    val cacheKey = "$imageUri|$maxDimension"
-    previewCache.get(cacheKey)?.let { return it }
     val uri = Uri.parse(imageUri)
+    val cacheKey = "$imageUri|$maxDimension|${cacheStamp(uri)}"
+    previewCache.get(cacheKey)?.let { return it }
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     openInputStream(context, uri)?.use { stream ->
         BitmapFactory.decodeStream(stream, null, bounds)
@@ -119,6 +119,15 @@ private fun openInputStream(
 ) = when {
     uri.scheme.isNullOrBlank() -> File(uri.toString()).inputStream()
     else -> context.contentResolver.openInputStream(uri)
+}
+
+private fun cacheStamp(uri: Uri): String {
+    val file = when {
+        uri.scheme.isNullOrBlank() -> File(uri.toString())
+        uri.scheme == "file" -> File(uri.path.orEmpty())
+        else -> null
+    } ?: return "content"
+    return "${file.lastModified()}-${file.length()}"
 }
 
 private val previewCache =

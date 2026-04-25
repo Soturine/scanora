@@ -68,8 +68,7 @@ import kotlin.math.max
 @Composable
 fun CropScreen(
     state: EditorUiState,
-    onSaveQuad: (DocumentQuad) -> Unit,
-    onContinue: () -> Unit,
+    onSaveQuadAndContinue: (DocumentQuad) -> Unit,
     onEnsureQuad: () -> Unit,
     onReestimate: () -> Unit,
     onBack: () -> Unit,
@@ -136,10 +135,7 @@ fun CropScreen(
                             }
                             Button(
                                 modifier = Modifier.weight(1f),
-                                onClick = {
-                                    onSaveQuad(localQuad)
-                                    onContinue()
-                                },
+                                onClick = { onSaveQuadAndContinue(localQuad) },
                                 enabled = !state.isProcessing,
                             ) {
                                 Text(text = stringResource(id = R.string.editor_save_crop_continue))
@@ -421,6 +417,7 @@ fun ReviewScreen(
     state: EditorUiState,
     onRename: (String) -> Unit,
     onUpdateTags: (String) -> Unit,
+    onPreparePreview: (Int) -> Unit,
     onClearMessage: () -> Unit,
     onSelectPage: (String) -> Unit,
     onMovePageUp: (String) -> Unit,
@@ -450,6 +447,7 @@ fun ReviewScreen(
     var title by rememberSaveable(scan.id, scan.title) { mutableStateOf(scan.title) }
     var tags by rememberSaveable(scan.id, persistedTags) { mutableStateOf(persistedTags) }
     var metadataExpanded by rememberSaveable(scan.id) { mutableStateOf(false) }
+    var previewLongSide by remember(selectedPage?.id) { mutableIntStateOf(1600) }
     val normalizedTagDraft = remember(tags) {
         tags
             .split(",")
@@ -463,6 +461,18 @@ fun ReviewScreen(
         state.errorMessage?.let {
             snackbarHostState.showSnackbar(it)
             onClearMessage()
+        }
+    }
+
+    LaunchedEffect(
+        selectedPage?.id,
+        selectedPage?.quad,
+        selectedPage?.filterType,
+        selectedPage?.rotationDegrees,
+        previewLongSide,
+    ) {
+        if (selectedPage != null) {
+            onPreparePreview(previewLongSide)
         }
     }
 
@@ -612,9 +622,13 @@ fun ReviewScreen(
                 item {
                     SelectedPageCard(
                         page = selectedPage,
+                        imageUri = state.previewImageUri ?: selectedPage.displayUri,
                         pageNumber = selectedPage.index + 1,
                         canMoveUp = orderedPages.firstOrNull()?.id != selectedPage.id,
                         canMoveDown = orderedPages.lastOrNull()?.id != selectedPage.id,
+                        onPreviewSize = { size ->
+                            previewLongSide = max(size.width, size.height).coerceIn(1400, 1800)
+                        },
                         onOpenOcr = { onOpenOcr(selectedPage.id) },
                         onMoveUp = { onMovePageUp(selectedPage.id) },
                         onMoveDown = { onMovePageDown(selectedPage.id) },
@@ -714,9 +728,11 @@ private fun FilterPresetCard(
 @Composable
 private fun SelectedPageCard(
     page: ScanPage,
+    imageUri: String,
     pageNumber: Int,
     canMoveUp: Boolean,
     canMoveDown: Boolean,
+    onPreviewSize: (IntSize) -> Unit,
     onOpenOcr: () -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
@@ -764,10 +780,11 @@ private fun SelectedPageCard(
                 }
             }
             AsyncUriImage(
-                imageUri = page.displayUri,
+                imageUri = imageUri,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(288.dp),
+                    .height(288.dp)
+                    .onSizeChanged(onPreviewSize),
                 contentScale = ContentScale.Fit,
                 maxDimension = 1800,
             )
