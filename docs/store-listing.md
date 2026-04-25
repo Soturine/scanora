@@ -10,7 +10,7 @@ Escaneie, corrija e exporte documentos com foco em privacidade local.
 
 ## Long description
 
-Scanora transforma seu Android em um scanner de documentos moderno, rápido e offline-first. Use o scanner rápido do Google como caminho principal para contratos, recibos, páginas de caderno e documentos do dia a dia; quando precisar, ajuste corte, filtros e páginas manualmente antes de revisar OCR por blocos ou exportar em PDF, JPG ou PNG.
+Scanora transforma seu Android em um scanner de documentos moderno, rápido e offline-first. Use o scanner rápido do Google como caminho principal para documentos do dia a dia, sem escolher tipo antes de capturar; quando precisar, ajuste corte, filtros e páginas manualmente antes de revisar OCR por blocos ou exportar em PDF, JPG ou PNG.
 
 O app foi pensado para quem quer produtividade sem depender de upload obrigatório. O processamento acontece localmente sempre que possível, incluindo OCR para copiar tudo ou copiar blocos reconhecidos e filtros voltados para leitura real de documentos.
 
@@ -38,8 +38,9 @@ Produtividade
 
 ## Diferenciais
 
-- scanner rápido como fluxo principal, com modo manual para ajuste fino;
-- modos dedicados para caderno, documento e recibo no fallback/editoração;
+- scanner rápido como fluxo principal, com Home minimalista e sem escolha antecipada de tipo;
+- modo manual e importação direta como fallback discreto para ajuste fino;
+- identidade visual com raposa mascote e novo ícone do app;
 - OCR local por blocos com cópia rápida;
 - foco em privacidade;
 - organização local por título, tags e favoritos;
@@ -48,7 +49,7 @@ Produtividade
 ## Checklist de publicação
 
 - definir screenshots finais;
-- revisar ícone final;
+- validar ícone final em tamanhos pequenos;
 - validar textos com ASO básico;
 - confirmar política de privacidade publicada;
 - testar exportação e compartilhamento em dispositivos reais.

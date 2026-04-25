@@ -4,6 +4,26 @@ Este projeto segue Semantic Versioning e recomenda Conventional Commits no fluxo
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-04-25
+
+### Added
+
+- Assets da raposa mascote para onboarding e identidade visual do app.
+- Novo ícone do launcher com a raposa escaneando documento.
+- Onboarding visual em 3 telas: escanear rapidamente, revisar/ajustar e privacidade por padrão.
+
+### Changed
+
+- Home foi simplificada para colocar `Escanear` como CTA principal absoluto.
+- A escolha antecipada entre documento, recibo e caderno saiu da Home; o scanner rápido agora usa um modo universal.
+- Ajuste manual e importação direta ficaram como fallback secundário, preservando a preferência de modo manual nas configurações.
+- Splash, onboarding e textos públicos foram alinhados à identidade da raposa e à versão `0.2.4`.
+
+### Fixed
+
+- Atrito visual causado por cards longos, textos explicativos e opções concorrendo com o scanner rápido na Home.
+- Referências públicas defasadas à versão `0.2.3` e ao visual antigo.
+
 ## [0.2.3] - 2026-04-24
 
 ### Added

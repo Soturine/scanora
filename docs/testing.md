@@ -7,7 +7,7 @@
 - busca por título e tags;
 - construção de nomes de arquivo para exportação;
 - teste instrumentado mínimo de inicialização da UI;
-- build `assembleDebug`, `testDebugUnitTest` e `lint` validados localmente na entrega `0.2.3`.
+- build `assembleDebug`, `testDebugUnitTest` e `lint` validados localmente na entrega `0.2.4`.
 
 ## O que ainda falta
 

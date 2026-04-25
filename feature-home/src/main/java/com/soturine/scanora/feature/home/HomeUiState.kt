@@ -5,8 +5,7 @@ import com.soturine.scanora.core.common.model.ScanMode
 
 data class HomeUiState(
     val isLoading: Boolean = true,
-    val query: String = "",
-    val selectedMode: ScanMode = ScanMode.DOCUMENT,
+    val manualMode: ScanMode = ScanMode.DOCUMENT,
     val recentScans: List<ScanDocument> = emptyList(),
 )
 

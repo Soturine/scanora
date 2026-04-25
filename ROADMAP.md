@@ -180,19 +180,60 @@ Este roadmap prioriza estabilidade, usabilidade e qualidade real do fluxo de esc
 
 ---
 
-## Depois da v0.2.3
+## v0.2.4 — Minimalismo + Identidade Visual
 
-### Candidatos para uma fase futura
+**Status:** concluída em 2026-04-25
 
-- QA visual final em aparelho e publicação das capturas oficiais
-- baseline profiles, benchmarks e tuning fino de performance
-- presets mais avançados por tipo de documento
-- melhorias reais de PDF e compressão por lote
-- criptografia local opcional para lotes sensíveis
+**Objetivo:** deixar o Scanora mais minimalista, direto e com identidade própria sem quebrar o scanner rápido, o fallback manual, OCR, exportação ou histórico.
+
+### Entregue
+
+- Home simplificada com `Escanear` como CTA principal absoluto;
+- escolha antecipada entre documento, recibo e caderno removida da Home;
+- scanner rápido usa modo universal e continua abrindo revisão após criar o lote local;
+- ajuste manual e importação direta ficaram como ações secundárias de fallback;
+- onboarding refeita em 3 telas visuais com raposa mascote;
+- novo ícone do launcher com a raposa escaneando documento;
+- splash passou a usar a nova identidade de forma discreta;
+- documentação pública, site e versão foram alinhados para `0.2.4`.
+
+### Resultado esperado desta release
+
+- o usuário não precisa decidir o tipo do documento antes de escanear;
+- a Home parece mais limpa, rápida e menos configurável;
+- o onboarding comunica o produto com menos texto e mais identidade;
+- a raposa aparece como marca do Scanora sem poluir as telas funcionais.
+
+---
+
+## Próximas fases
+
+### v0.2.5 — OCR manual confiável
+
+- pós-processamento de OCR manual;
+- agrupamento de linhas em parágrafos;
+- texto contínuo mais útil para copiar;
+- redução de ruído e quebras artificiais;
+- melhoria da utilidade do OCR sem trocar a engine principal.
+
+### v0.2.6 — Fidelidade da imagem e pipeline único
+
+- unificação do pipeline de imagem;
+- fonte única da verdade para `sourceUri`, crop, rotação, filtro, preview, OCR e exportação;
+- maior coerência entre o que o usuário vê, edita, reconhece por OCR e exporta;
+- refinamento de fidelidade visual sem adicionar biblioteca pesada antes da necessidade real.
+
+### Candidatos para fases futuras
+
+- QA visual final em aparelho e publicação das capturas oficiais;
+- baseline profiles, benchmarks e tuning fino de performance;
+- presets mais avançados por tipo de documento em área posterior ao scan;
+- melhorias reais de PDF e compressão por lote;
+- criptografia local opcional para lotes sensíveis.
 
 ### Itens que ficam para depois de estabilizar o básico
 
-- OpenCV
-- Koin
-- PdfBox
-- pipeline premium de filtros próprios
+- OpenCV;
+- Koin;
+- PdfBox;
+- pipeline premium de filtros próprios.

@@ -88,12 +88,12 @@ fun ScanoraNavHost(
             val state = homeViewModel.uiState.collectAsStateWithLifecycle()
             HomeScreen(
                 state = state.value,
-                onStartQuickScan = { mode, uris ->
+                onStartQuickScan = { uris ->
                     coroutineScope.launch {
                         createDraftScan(
                             context = context,
                             container = container,
-                            mode = mode,
+                            mode = ScanMode.DOCUMENT,
                             uris = uris,
                             source = DraftSource.QUICK_SCAN,
                         )?.let { (scanId, _) ->
@@ -117,8 +117,6 @@ fun ScanoraNavHost(
                         }
                     }
                 },
-                onModeSelected = homeViewModel::onModeSelected,
-                onQueryChange = homeViewModel::onQueryChange,
                 onOpenHistory = { navController.navigate(ScanoraDestinations.History) },
                 onOpenSettings = { navController.navigate(ScanoraDestinations.Settings) },
                 onOpenScan = { scanId ->
@@ -389,7 +387,7 @@ private suspend fun createDraftScan(
     if (uris.isEmpty()) return null
     val stableUris = persistSourceUris(context, uris)
     if (stableUris.isEmpty()) return null
-    val formatter = SimpleDateFormat("dd MMM yyyy HH:mm", Locale("pt", "BR"))
+    val formatter = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.forLanguageTag("pt-BR"))
     val title = "${source.titlePrefix} ${formatter.format(Date())}"
     val scanId = container.scanRepository.createScan(
         title = title,

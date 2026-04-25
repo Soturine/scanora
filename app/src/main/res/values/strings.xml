@@ -2,13 +2,16 @@
 <resources>
     <string name="app_name">Scanora</string>
     <string name="splash_title">Scanora</string>
-    <string name="splash_subtitle">Organize, revise e exporte seus documentos com foco em privacidade.</string>
+    <string name="splash_subtitle">Escaneie, revise e exporte com privacidade.</string>
     <string name="onboarding_page_one_title">Escaneie em poucos passos</string>
-    <string name="onboarding_page_one_body">Use Escanear rápido como caminho principal. Câmera manual e importação direta ficam para ajustes finos.</string>
-    <string name="onboarding_page_two_title">Ajuste corte, filtros e ordem</string>
-    <string name="onboarding_page_two_body">Revise cada página, aplique filtros de documento, gire, renomeie e reorganize antes de exportar.</string>
+    <string name="onboarding_page_one_body">Use o scanner rápido para capturar ou importar documentos.</string>
+    <string name="onboarding_page_one_image_description">Raposa escaneando um documento com celular.</string>
+    <string name="onboarding_page_two_title">Revise antes de salvar</string>
+    <string name="onboarding_page_two_body">Ajuste corte, filtros e ordem das páginas quando precisar.</string>
+    <string name="onboarding_page_two_image_description">Raposa ajustando os cantos de um documento.</string>
     <string name="onboarding_page_three_title">Privacidade por padrão</string>
-    <string name="onboarding_page_three_body">O processamento acontece localmente sempre que possível, sem upload obrigatório para usar o app.</string>
+    <string name="onboarding_page_three_body">Seus scans ficam no aparelho sempre que possível.</string>
+    <string name="onboarding_page_three_image_description">Raposa protegendo um documento com escudo.</string>
     <string name="onboarding_next">Próximo</string>
     <string name="onboarding_finish">Começar</string>
 </resources>

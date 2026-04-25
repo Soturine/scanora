@@ -3,11 +3,11 @@
     <string name="settings_title">Configurações</string>
     <string name="settings_eyebrow">Preferências</string>
     <string name="settings_heading">Ajuste o Scanora ao seu jeito</string>
-    <string name="settings_supporting">Tudo aqui continua local: tema, modo padrão e preferências de exportação.</string>
+    <string name="settings_supporting">Tudo aqui continua local: tema, fallback manual e preferências de exportação.</string>
     <string name="settings_theme_section">Tema</string>
     <string name="settings_theme_supporting">Defina como a interface deve aparecer no dia a dia.</string>
-    <string name="settings_default_mode_section">Modo padrão</string>
-    <string name="settings_mode_supporting">Escolha o contexto que aparece pronto para a próxima captura.</string>
+    <string name="settings_default_mode_section">Modo manual padrão</string>
+    <string name="settings_mode_supporting">Usado apenas no ajuste manual e na importação direta. O scanner rápido continua universal.</string>
     <string name="settings_pdf_quality_section">Qualidade padrão do PDF</string>
     <string name="settings_pdf_supporting">Essa preferência é usada como base na tela de exportação.</string>
     <string name="settings_reset_onboarding">Ver onboarding novamente</string>

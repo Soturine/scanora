@@ -41,7 +41,7 @@ O projeto foi dividido em módulos para manter o app simples no MVP, mas já com
 - `Room`
   Guarda scans, páginas, tags serializadas, favoritos, timestamps e estado de rascunho.
 - `DataStore`
-  Guarda onboarding, tema, modo padrão e qualidade padrão do PDF.
+  Guarda onboarding, tema, modo manual padrão e qualidade padrão do PDF.
 
 ## Pipeline de imagem
 

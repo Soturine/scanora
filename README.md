@@ -3,7 +3,7 @@
 ![Android](https://img.shields.io/badge/platform-Android-2E7D8C)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-23414B)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-2026.03.00-DD8A2E)
-![Version](https://img.shields.io/badge/version-0.2.3-133942)
+![Version](https://img.shields.io/badge/version-0.2.4-133942)
 [![Android CI](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/android-ci.yml)
 [![Deploy Pages](https://github.com/Soturine/scanora/actions/workflows/pages.yml/badge.svg)](https://github.com/Soturine/scanora/actions/workflows/pages.yml)
 
@@ -18,6 +18,8 @@ Site: https://soturine.github.io/scanora/
 - scanner rápido com `ML Kit Document Scanner` como fluxo principal direto na Home;
 - importação de galeria pelo fluxo do Google quando suportada;
 - captura manual com `CameraX` e importação direta como fallback editável;
+- Home minimalista sem escolha obrigatória de tipo antes do scan;
+- onboarding e ícone do app com a raposa mascote do Scanora;
 - cópia das imagens de entrada para armazenamento interno antes de criar o lote local;
 - sugestão inicial de crop mais robusta para fotos inclinadas, galeria e fundos poluídos;
 - reajuste automático do crop e editor manual mais confortável para acertos finos;
@@ -29,7 +31,7 @@ Site: https://soturine.github.io/scanora/
 
 ## Proposta de valor
 
-Scanora foi pensado para transformar páginas, contratos, cadernos e recibos em arquivos legíveis sem depender de upload obrigatório. O scanner rápido virou o caminho principal, mas o fluxo manual continua disponível quando o documento precisa de ajuste fino.
+Scanora foi pensado para transformar páginas, contratos, cadernos e recibos em arquivos legíveis sem depender de upload obrigatório. O scanner rápido é o caminho principal, sem exigir que o usuário escolha o tipo antes de capturar, e o fluxo manual continua disponível quando o documento precisa de ajuste fino.
 
 ## Capturas
 
@@ -94,7 +96,7 @@ Política completa em [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 ## Status
 
-`0.2.3` mantém o scanner rápido como fluxo principal e melhora o pós-scan: OCR por blocos, revisão menos poluída, exportação progressiva e estado final com arquivo, tipo, tamanho, local salvo, abrir e compartilhar. O próximo passo natural continua sendo fechar QA visual em dispositivo e publicar capturas oficiais.
+`0.2.4` deixa o app mais minimalista e com identidade própria: Home mais direta, scanner rápido como CTA absoluto, sem escolha antecipada de tipo, onboarding visual com a raposa mascote e novo ícone do launcher. As próximas fases documentadas são `0.2.5` para OCR manual confiável e `0.2.6` para fidelidade da imagem e pipeline único.
 
 ## Contribuir
 
